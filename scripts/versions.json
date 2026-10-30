@@ -1,0 +1,24 @@
+{
+  "qt": "6.12.0",
+  "python_release": "3.15.0rc2",
+  "python_abi": "3.15",
+  "python_xcframework_url": "https://www.python.org/ftp/python/3.15.0/python-3.15.0rc2-iOS-XCframework.tar.gz",
+  "python_xcframework_sha256": "2496d92689da625cd349e856e17b3d540787f8d17806e21536e8d394d940adc0",
+  "source_revisions": {
+    "pyside-setup": "f50facb83fc3dc5f3240c854668c7a6dd93871b2",
+    "qtdeclarative": "4332fbbb4c340463dc8cee36dda0c85d932122d8",
+    "qtbase": "025bdad181de241e81bf853c8a2d7bf3d19261a9",
+    "qtsvg": "883a58532078d003cefef0a549bfe9f885ce41f5",
+    "qt5compat": "9c2a1b4c8298c750f8632e2fd19f7a1a539c5f09",
+    "qtshadertools": "bccd516b990a6396900051470ac86cc27a7042ea"
+  },
+  "qtbase_ios15_patch_sha256": "1a7a858d30f616d84e0b17c510fe64f88c449c932c0db776ae61ea0e9881ad63",
+  "host_generator_url": "https://download.qt.io/official_releases/QtForPython/shiboken6_generator/shiboken6_generator-6.12.0-cp310-abi3-macosx_14_0_universal2.whl",
+  "host_generator_sha256": "d93fb47e8f071855f9b92edea24c331d88461c5b94c0ef656eb5efe157bf0abf",
+  "verified_device_wheels": {
+    "pyside6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl": "f653d1c4415ee5a95b82aa1141450948dc0b203b84d653cad1b55adbe0877eb7",
+    "shiboken6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl": "ded7491b5fcb3d06b71135b2e9a8d7ebfffb94c7ae0684dc811e6c0d333e513d"
+  },
+  "ffmpeg_version": "9.0.2",
+  "ffmpeg_source_sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
+}

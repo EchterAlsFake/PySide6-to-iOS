@@ -1,287 +1,188 @@
-# Qt 6.11.2 / PySide6 6.11.2 Android investigation
+# Qt 6.12 / PySide6 iOS investigation
 
-Test host: Arch Linux, 10 September 2026. Target used for the first reproducible
-build is `arm64-v8a`.
+Reference dates: **28–30 October 2026**. This is the iOS counterpart to the
+Android guide's build diary. It records observed results separately from
+what a new portable build script promises.
 
-## Required versions
+## Required versions and host
 
-| Component | Version used | Why |
-| --- | --- | --- |
-| Qt / Qt for Python | 6.11.2 | Current matching release |
-| JDK | Temurin 21.0.12.1 | Qt 6.11 requires JDK 21 or newer |
-| Android SDK platform | 36 revision 2 | Qt 6.11 Java sources require `android.jar` from API 36 |
-| Android build tools | 36.0.0 | Qt 6.11 documented version |
-| Android NDK | r27c (`27.2.12479018`) | Qt 6.11 supported NDK |
-| Native API for CPython | 35 | NDK r27c has no API-36 compiler wrapper |
+- Intel macOS 15.7.2 VM on an Arch Linux host, initially 4 virtual CPUs and
+  later 8; 16 GB RAM; no usable VM GPU.
+- Xcode 26.3 with iPhoneOS/iPhoneSimulator 26.2 SDKs; full Xcode kept outside
+  `/Applications` during the experiment. `DEVELOPER_DIR` selected it per shell.
+- Host Python 3.13.16; PySide/Shiboken 6.12.0; embedded official Python 3.15.0rc2.
+- Physical target: iPhone 7, `iPhone9,1`, iOS 15.8.8, palera1n rootless.
+- Exact Qt source revisions and reference wheel hashes are in
+  [`scripts/versions.json`](scripts/versions.json).
 
-The SDK API and native API must not be represented by one setting. With the
-old guide's API 35 SDK, Qt configuration fails because
-`platforms/android-36/android.jar` is missing. With native API 36, CPython
-fails because `aarch64-linux-android36-clang` does not exist in NDK r27c.
+## 28 October — simulator to physical device
 
-## Confirmed helper defects
+The Intel simulator used public `ios_x86_64_simulator` wheels. The simulator
+could run without a VM GPU using `QT_QUICK_BACKEND=rhi`, `QSG_RHI_BACKEND=opengl`
+and `QSG_RENDER_LOOP=basic` passed through `SIMCTL_CHILD_…` at launch.
+These are simulator-specific settings; the phone uses default Metal rendering.
 
-The upstream `tools/cross_compile_android/main.py` in the `v6.11.2` tag:
+Moving to an older phone required a new ARM64 Qt/PySide build for iOS 15;
+the official Qt 6.12 minimum is 18. Host and target kits, native packages,
+wheels, bundle IDs and data containers were kept separate from the simulator.
 
-1. hard-codes Python 3.11 in both Python and CMake code;
-2. reuses generated scripts and CMake toolchains containing stale absolute
-   paths;
-3. shares one CPython checkout and one target prefix across Python versions;
-4. assumes host and Android Qt use the Qt online installer's directory layout;
-5. hard-codes nine parallel jobs;
-6. uses one API value for native compilation and automatic SDK installation;
-7. emits x86-only compiler flags for ARM targets;
-8. breaks Python 3.10 when launched from a virtual environment because the
-   venv's `sys._home` redirects old CPython `sysconfig` logic to the installed
-   host prefix;
-9. allows host `pkg-config` metadata to enable unavailable Android libraries,
-   which breaks Python 3.14 at `_bz2` (and potentially other modules);
-10. launches each `setup.py` subprocess without activating or adding the
-    selected virtual environment to `PATH`, so the target packaging phase
-    cannot find the venv-provided `patchelf`; and
-11. unconditionally compiles the generated `QSslEllipticCurve` wrapper even
-    when Qt's `ssl` feature is disabled and Shiboken therefore does not
-    generate that source file.
+### Compiler and source-build findings
 
-The fork now also validates the requested SDK `android.jar`, the
-architecture/API-specific NDK compiler wrapper, and the matching cached
-`libpython` before an expensive build starts.
+- `os_sync_*` locking APIs required 17.4. The patch selects the generic mutex
+  path with the older public Mach-semaphore implementation and consistent futex flags.
+- Metal 3/HDR and several UIKit/EventKit/accessibility/hover APIs needed runtime guards.
+- Availability warnings were errors for all four source languages.
+- Host QML tools built with host animation disabled; target Quick remained enabled.
+- A normalized include/lib view into Python.framework fixed FindPython.
+- The host Shiboken generator wheel already linked Clang statically; another LLVM SDK was unnecessary.
+- Build OpenGL bindings before Quick. The opposite order broke generated-header lookup.
+- Never silently reuse an unpacked `_wheels` cache after replacing its source wheels.
 
-A clean local fork based on upstream tag `v6.11.2` is prepared at
-`../pyside-setup-android`, branch `android-cross-build-fixes`. It addresses the
-items above and leaves its `origin` remote free for the maintainer's GitHub
-fork. The Qt repository is configured as remote `upstream`.
+### Milestones actually verified
 
-## CPython target prefixes
-
-Python 3.10, 3.11, and 3.14 have each been cross-compiled for AArch64 with NDK
-r27c at native API 35. Their headers and shared libraries are valid, and their
-target prefixes contain 59, 60, and 60 extension modules respectively.
-
-The generic NDK build does not provide Android builds of OpenSSL, libffi,
-bzip2, lzma, and similar third-party libraries. Corresponding optional stdlib
-modules are omitted. This does not prevent using the prefix to compile PySide6,
-but it matters when assembling a production Python runtime. Python 3.14 also
-offers an official Android build and packaging workflow under
-`Platforms/Android`.
-
-## Qt source-build failures reproduced
-
-1. SDK platform 35 is too old for Qt 6.11 Java sources; configuration requires
-   `platforms/android-36/android.jar`.
-2. A distro Qt 6.11.2 prefix without Qt Linguist Tools is not a sufficient
-   cross-build host; the target configure cannot resolve host `lconvert`.
-3. A source-built host containing only Base, Declarative, ShaderTools, and
-   Tools is still insufficient for the larger target module set. Quick3D,
-   SCXML, RemoteObjects, CanvasPainter, and Lottie require the host packages
-   exporting `balsam`, `qscxmlc`, `repc`, `qcshadergen`, and `lottietoqml`.
-4. Selecting `qtwebview` causes the supermodule to consider its optional
-   QtWebEngine dependency. Without an explicit `-skip qtwebengine`, Android
-   cross-configuration fails looking for a host `gn` executable.
-5. PySide's target packaging subprocess cannot find `patchelf` even though the
-   host-generator phase finds the copy installed in the same venv. The helper
-   must prepend the invoked interpreter's scripts directory to `PATH` before
-   launching either subprocess.
-6. A Qt build without Android OpenSSL makes Shiboken omit
-   `qsslellipticcurve_wrapper.cpp`, but the QtNetwork CMake source list still
-   includes it. Moving that wrapper into the existing `ssl`-enabled source
-   branch fixes the generated unity build.
-
-The final configuration succeeds after installing those same-version host
-tools and explicitly skipping QtWebEngine. It builds Qt for Android with a
-native minimum API of 28 and 16 KiB page-size support. DBus, Hunspell, and
-Android OpenSSL are absent in this configuration.
-
-## Build status
-
-- Source-built Qt 6.11.2 host prefix and module-specific tools: complete and
-  validated.
-- Source-built Qt 6.11.2 `arm64-v8a` prefix: complete and validated (137
-  shared Qt libraries; Qt Core is AArch64, Android API 28, NDK r27c).
-- PySide6/Shiboken6 AArch64 wheels for Python 3.10, 3.11, and 3.14: complete.
-
-## Wheel validation
-
-| Python | PySide6 SHA-256 | Shiboken6 SHA-256 |
-| --- | --- | --- |
-| 3.10 | `6961fb15171d2ad689d98d0cd7bc3a5cd1aa23c57486d9282c20484a441d4f0a` | `004df9c2bcf1563b751e9a0e8695243e7a76274fc58a5138b3678abe6b5e1492` |
-| 3.11 | `edb08e2c43961050416153d336024f1a5cf100647f775cc8216ba7639d40ebe5` | `f91ce80ce880900e855bfe6f1b11df03cce1a5865d880429490195578c340f65` |
-| 3.14 | `730723486baa98f7e35fa7a290e2c9f76aa282f1f6eccafd425481e900afe38b` | `49222bd177aa4bf77dff72d68bf27b6245a38bb7dfe69289769ed17b7ce0e7c7` |
-
-All six archives pass `unzip -t`. Their wheel tags are the matching
-`cp310`, `cp311`, or `cp314` plus `android_aarch64`. The PySide and Shiboken
-extensions are AArch64 Android 35 ELF objects and depend on the matching
-`libpython3.x.so`. A later full-archive audit found that the Shiboken shared
-objects in these older wheels have `0x1000` (4 KiB) load alignment; the
-companion fork's linker template was corrected on 29 September 2026. An audit
-of 1,038 ELF files in the three packaged trees found no host-architecture
-binaries.
-
-Artifacts are under `work/wheels/py310`, `work/wheels/py311`, and
-`work/wheels/py314`. They have not yet been exercised in an APK on a device or
-emulator, so runtime compatibility remains a separate validation step.
-
-Large downloaded sources, SDKs, build trees, and artifacts live below
-`work/`, which is intentionally ignored by Git.
-
-## 29 September 2026 update
-
-The new `scripts/build-android-runtime.sh` builds target OpenSSL 3.5.8 LTS,
-libffi 3.4.8, bzip2 1.0.8, xz 5.8.4, SQLite 3.50.4, and CPython. Arch Linux
-host package installation is available only when `--install-arch-deps` is
-requested. AArch64 CPython 3.12 and 3.13 runtimes now include `_ssl`,
-`_hashlib`, `_ctypes`, `_bz2`, `_lzma`, and `_sqlite3`. The runtime audit passed
-76 and 77 Android shared objects respectively, all with 16 KiB load alignment.
-
-The companion fork's Android linker template now requests 16 KiB alignment
-for Shiboken as well. Fresh Qt for Python 6.11.2 AArch64 wheels were built:
-
-| Python | PySide6 SHA-256 | Shiboken6 SHA-256 |
-| --- | --- | --- |
-| 3.12 | `09c5247845cb74aac32a68746165135c274d32b139ce73393dc4bfc8bd92976a` | `38f0ff1bb427f2e69fde0e5080237b9dec7277d0a404fa268b458602deadc6cd` |
-| 3.13 | `f54a077b2a964460b8d5766cea553c5134c072b24be37b5b56ce02eef68ec59a` | `e3f6782b61b12d7d56500857c892739177984033421ca9b2284656bb1faddeec` |
-
-Each wheel pair passed archive integrity, wheel-tag, AArch64 ELF, and 16 KiB
-alignment checks across 347 packaged shared objects. Artifacts are under
-`work/wheels/py312` and `work/wheels/py313`. They have not been tested in an
-APK. The older 3.10, 3.11, and 3.14 Shiboken wheels were subsequently
-rebuilt with the updated linker template, as recorded below.
-
-## 30 September 2026 rebuild status
-
-The matrix helpers in `scripts/` now build Qt, native dependencies, CPython,
-PySide6, and Shiboken6 for all four Android ABIs and Python 3.10–3.14. The
-build is resumable with `RESUME=1`. The completed arm64 and armv7 wheels for
-all five Python versions pass runtime and wheel audits, including Android ELF
-architecture and 16 KiB alignment. The older
-arm64 wheels were rebuilt with the corrected linker flags. armv7 Qt was also
-rebuilt with explicit 16 KiB linker flags. All x86 and x86_64 combinations
-remain to be built.
-
-The wheel files and Android runtime prefixes are in ignored `work/`; Git
-commits contain the scripts and documentation, not those binary artifacts.
-Device or emulator execution has not yet been tested. QtNetwork HTTPS still
-needs a Qt build configured with Android OpenSSL.
-
-The 20 completed wheel files, SHA-256 list, and compressed Android CPython
-runtime prefixes have been backed up to the GitHub prerelease
-`android-matrix-snapshot-2026-09-30`. The main build scripts are on `master`
-and the companion PySide fork is on branch `android-cross-build-fixes` at
-`https://github.com/EchterAlsFake/pyside-setup`.
-
-## 9 October 2026 — Qt 6.12.0 & PySide6 6.12.0 Matrix Update
-
-### 1. Upstream Qt 6.12.0 Changes
-The official Qt 6.12.0 and PySide6 6.12.0 releases introduce notable Android architectural changes:
-- **32-Bit Android Drop**: Upstream dropped support for `armv7a` and `i686` in `tools/cross_compile_android/` and `pyside6-android-deploy` (PYSIDE-3426 / PYSIDE-1612). Upstream now only advertises `aarch64` and `x86_64`.
-- **Prebuilt Python Download**: Upstream replaced the internal CPython cross-compile logic with downloading prebuilt Python 3.14.2 binaries from python.org, removing the ability to target Python 3.10–3.13 natively with custom extensions.
-- **PEP 384 Limited API (`cp310-abi3`)**: Upstream `setup.py` bdist_wheel invocation now passes `--limited-api=yes`, producing `cp310-abi3-android_aarch64.whl` and `cp310-abi3-android_x86_64.whl`. These wheels run across all Python 3.10–3.14 interpreters on the device.
-- **NDK Bump**: Upstream updated default NDK to r28c (`28.2.13676358`), while maintaining compatibility with r27c for Qt libraries.
-
-### 2. Remaining Upstream Defects
-- **Un-gated SSL Wrappers**: In `sources/pyside6/PySide6/QtNetwork/CMakeLists.txt`, `qsslellipticcurve_wrapper.cpp` and newly introduced `qsslkeyingmaterial_wrapper.cpp` remain unconditionally compiled outside the SSL feature check. In builds without Android OpenSSL, Shiboken does not generate these files, causing unity compilation failures.
-- **Toolchain Template Compiler/Linker Flags**: `tools/cross_compile_android/templates/toolchain_default.tmpl.cmake` still emits x86 flags (`-msse4.2`, `-mpopcnt`) for all targets and lacks explicit 16 KiB page-alignment linker flags (`-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384`).
-- **Loss of Matrix Flexibility**: Upstream dropped multi-version Python target specification, custom cache paths, and explicit `--qt-host-path` control.
-
-### 3. Companion Fork (`pyside-setup`) Updates
-The local companion checkout at `../pyside-setup-android` has been updated on branch `android-cross-build-fixes` (based on upstream tag `v6.12.0`):
-1. **SSL Gating**: Moved `qsslellipticcurve_wrapper.cpp` and `qsslkeyingmaterial_wrapper.cpp` into the `else()` branch of `if("ssl" IN_LIST QtNetwork_disabled_features)`.
-2. **16 KiB Page Alignment**: Updated `toolchain_default.tmpl.cmake` with `-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384` and guarded `-msse4.2` / `-mpopcnt` to x86/x86_64 only.
-3. **Full Matrix Restoration**: Re-enabled support for all 4 Android ABIs (`aarch64`, `armv7a`, `i686`, `x86_64`) and Python 3.10 through 3.14. Added `--limited-api` and `--dist-dir` options.
-
-### 4. Repository & Matrix Automation
-- `scripts/build-qt-android.sh`: Updated default `QT_VERSION` to `6.12.0`.
-- `scripts/build-android-runtime.sh`: Updated default `QT_PREFIX` to `6.12.0`, added support for copying and validating both version-specific (`cp<ver>-cp<ver>`) and limited-API (`cp310-abi3`) wheels.
-- `scripts/rebuild-android-matrix.sh`: Updated `QT_VERSION` to `6.12.0` and made stale build directory cleanup dynamic.
-- `scripts/check-android-matrix.sh`: Updated to verify Qt 6.12.0 Core headers and runtime/wheel pairs.
-- `scripts/check-android-wheels.py`: Updated wheel tag validation to accept `cp310-abi3` wheels for Python >= 3.10.
-- Source build guide `SOURCE_BUILD_6.12.md` created with official SHA-256 `98ff4f44bac6ec3e1e62ee2a4316ae0e3d15badb015d753cc0268a20db52f165` for `qt-everywhere-src-6.12.0.tar.xz`.
-
-## 10 October 2026 — Full 5 × 4 Matrix Completion & Audit
-
-The entire Android matrix for Qt 6.12.0 / PySide6 6.12.0 has been built and audited:
-- **Architectures (4)**: `aarch64`, `armv7a`, `i686`, `x86_64`
-- **Python Versions (5)**: `3.10`, `3.11`, `3.12`, `3.13`, `3.14`
-- **Total Targets**: 20 target runtime prefixes and 40 wheels (20 PySide6 + 20 Shiboken6).
-
-### 1. Storage Optimization & Automated Cleanup
-To operate within systems with restricted disk storage (~25 GB available):
-- `scripts/build-qt-host.sh` and `scripts/build-qt-android.sh` auto-detect pre-installed Qt 6.12.0 in `~/Qt/6.12.0`, avoiding redundant host/target Qt compilation.
-- `scripts/build-android-runtime.sh` cleans intermediate autotools build directories (`$BUILDS/<name>`) and host/target CPython object directories (`$BUILDS/python-*`) immediately after installation into target prefixes.
-- `scripts/rebuild-android-matrix.sh` purges `$PYSIDE_FORK/build` and `$PYSIDE_FORK/dist` as soon as wheels are verified and copied to `work/wheels/py<version>/`.
-- Transient build usage remained strictly below 3 GB, leaving 14+ GB of free disk space throughout the 2-hour multi-core build.
-
-### 2. Android 15 Page Alignment Architecture Verification
-- **64-Bit Android (`aarch64`, `x86_64`)**: Full compliance with Android 15's 16 KiB (`0x4000`) page alignment mandate across all CPython runtime binaries and packaged Qt/PySide6/Shiboken6 shared libraries.
-- **32-Bit Android (`armv7a`, `i686`)**: Correctly aligned to standard 4 KiB (`0x1000`) pages matching upstream Qt's official binaries and Android bionic kernel architecture.
-- Both `scripts/check-android-wheels.py` and `scripts/check-android-runtime.sh` enforce architecture-aware minimum alignment (`0x4000` on 64-bit, `0x1000` on 32-bit).
-
-### 3. Final Matrix Audit Summary
-`bash scripts/check-android-matrix.sh` verified all 20 runtime prefixes (73–77 ELF binaries each) and all 40 wheel archives (380 ELF binaries per target, 7,600 ELF files total) with zero errors:
-- `work/wheels/py310/`: `cp310-cp310` wheels for `aarch64`, `armv7a`, `i686`, `x86_64`
-- `work/wheels/py311/`: `cp311-cp311` wheels for `aarch64`, `armv7a`, `i686`, `x86_64`
-- `work/wheels/py312/`: `cp312-cp312` wheels for `aarch64`, `armv7a`, `i686`, `x86_64`
-- `work/wheels/py313/`: `cp313-cp313` wheels for `aarch64`, `armv7a`, `i686`, `x86_64`
-- `work/wheels/py314/`: `cp314-cp314` wheels for `aarch64`, `armv7a`, `i686`, `x86_64`
-
-## 19 October 2026 — permanent r28c default and clean build
-
-The current guide and build scripts now default to Android NDK **r28c
-(`28.2.13676358`)**. The companion fork uses the same default for wheel
-compilation and `pyside6-android-deploy`; explicit NDK paths still take
-precedence. The fork's CLI help and Android build instructions now agree with
-that default. Native CMake settings consistently use API 35, and the helper
-passes the separate SDK API 36 to Java compilation.
-
-Runtime/dependency prefixes record the NDK revision and native API in
-`.android-toolchain`. Builds reject mismatched or unrecorded cached prefixes,
-and runtime audits check the record before a matrix resume can skip a target.
-Checks confirmed that an r27c cache and an unrecorded cache are both rejected.
-
-A clean AArch64/Python 3.11 build completed using the maintained runtime
-script and companion fork at
-[`4a1b4e0e2`](https://github.com/EchterAlsFake/pyside-setup/commit/4a1b4e0e2).
-The native dependencies, target CPython, Shiboken generator, PySide/Shiboken
-bindings, and wheel packaging used fresh installation/build directories.
-Only verified source archives, the host Python interpreter, installed SDK/NDK,
-and the installed Qt prefixes were reused.
-
-| Component | Clean-build configuration |
+| Stage | Evidence/result |
 | --- | --- |
-| Qt / PySide / Shiboken | 6.12.0 |
-| Target | AArch64, native API 35 |
-| NDK / compiler | r28c (`28.2.13676358`), Clang 19.0.1 |
-| Target CPython | 3.11.17, source commit `59d1bd5f0beb95f26771a96fe11eac1653d69ffa` |
-| Host CPython | 3.11.16 |
-| SDK / build tools / JDK | 36 / 36.0.0 / OpenJDK 21 |
-| Qt prefixes | Existing installer Qt 6.12.0, built with r27c |
+| Native UIKit | User saw “Hello World! Apple toolchain works.” |
+| Embedded Python | stdlib/platform/computation probe succeeded |
+| Qt rendering | Python + Qt text visibly confirmed |
+| QML/Material | User confirmed screen/button; counter read back as five taps |
+| Graphics | Apple A10 Metal device, exposed window, presented frames |
+| Native packages | CFFI, chompjs, selectolax, curl-cffi sync/async and cryptography checks passed |
+| Real app | User confirmed interface and smooth operation |
+| Media workflow | User downloaded, found the file, later played the remux and confirmed a fresh automatic remux |
 
-The runtime audit passed **75** AArch64 shared objects, including `_ssl`,
-`_hashlib`, `_ctypes`, `_bz2`, `_lzma`, and `_sqlite3`. Both wheels passed ZIP
-integrity, Python/ABI tag, AArch64 ELF architecture, and 16 KiB load-alignment
-checks across **221** packaged shared objects. The runtime objects and all
-**32** newly built binding objects contain the r28c NDK identity; the bindings
-depend on `libpython3.11.so`. Java compilation produced
-`Qt6AndroidBindings.jar` successfully with SDK 36.
+### Jailbreak deployment and Metal
 
-| Wheel | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `pyside6-6.12.0-6.12.0-cp311-cp311-android_aarch64.whl` | 67,162,470 | `8c8e2ee33300c34844854bd7720912412c08df4754d982b932ed7d1768c46455` |
-| `shiboken6-6.12.0-6.12.0-cp311-cp311-android_aarch64.whl` | 280,458 | `73dbe32b8ca85a3655a34cd0f04fb535e3c6ec39cbd71a27a10a53408999f46f` |
+The phone was reached over Wi-Fi SSH from the NATed VM; a bridged VM address
+was not required in this network. Ping failure alone was not proof that SSH
+would fail. No phone IP, password, SSH identity or pairing file is published here.
 
-For a fresh checkout with the toolchains installed, the equivalent command is:
+Rootless installation used `/var/jb/Applications`, a rootless shell, `ldid`,
+`uicache` and `uiopen`. The app's separate data container was preserved across
+bundle updates. Stop the **actual executable** (`<name>_bin` for the generated
+Python launcher), not only the app display name, before replacing a bundle.
 
-```bash
-WORK_ROOT="$PWD/work/r28c-clean" \
-PYSIDE_FORK="$HOME/pyside-setup" \
-QT_PREFIX="$HOME/Qt/6.12.0" \
-QT_HOST_PREFIX="$HOME/Qt/6.12.0/gcc_64" \
-JOBS=4 bash scripts/build-android-runtime.sh \
-    --python-version 3.11 --abi aarch64 --with-wheels
+Initial Qt tests stayed alive and rendered a correct offscreen image while
+the physical screen remained black. Adding `UIApplicationSceneManifest` /
+`QIOSWindowSceneDelegate` was necessary but insufficient. The key result was
+that both Metal device creation and GLES context creation were denied under
+the ad-hoc jailbreak signing setup.
+
+A narrow `com.apple.security.iokit-user-client-class` allowlist for the A10
+graphics/IOSurface classes restored graphics access in that **jailbreak**
+installation. It did not add no-sandbox/platform-app/JIT privileges or change
+global jailbreak settings. This does **not** establish that normal stock
+development-signed apps need or may request that private entitlement.
+
+The explicit scene configuration used:
+
+```xml
+<key>UIApplicationSceneManifest</key>
+<dict>
+  <key>UIApplicationSupportsMultipleScenes</key><false/>
+  <key>UISceneConfigurations</key>
+  <dict>
+    <key>UIWindowSceneSessionRoleApplication</key>
+    <array><dict>
+      <key>UISceneConfigurationName</key><string>Default Configuration</string>
+      <key>UISceneDelegateClassName</key><string>QIOSWindowSceneDelegate</string>
+    </dict></array>
+  </dict>
+</dict>
 ```
 
-This validates the r28c source-built Python and bindings against prebuilt Qt.
-Qt itself was not rebuilt, and no APK was installed or run on a device or
-emulator. Other Python/ABI combinations were not rebuilt in this r28c check;
-the older matrix results above remain historical results.
+### Native dependency and FFmpeg findings
 
+CFFI initially crashed in its closure preparation. Enabling its Apple/libffi
+trampoline-table path made both a native call and callback work without JIT.
+curl-cffi passed certificate-verified synchronous and asyncio requests.
+cryptography passed Ed25519 and AES-GCM probes. The OpenSSL legacy-provider
+warning was recorded rather than hidden; legacy algorithms were not tested.
+
+The first phone download was 445,108,800 bytes of MPEG-TS with an `.mp4` name.
+Apple reported it unreadable/unplayable. Standard embedded Python could not
+launch a desktop FFmpeg subprocess, so a CPython extension linked static FFmpeg
+libraries and copied the encoded streams into a faststart MP4.
+
+Remux took 4.893 s; output with metadata and a generic PNG cover was
+431,414,546 bytes, duration 1034.733333 s, H.264 1280×720/30fps and stereo AAC.
+AVFoundation decoded audio and video. Full independent decoding counted
+31,040 video / 44,562 audio frames, zero corrupt packets, zero decoding errors
+and zero timestamp regressions. A single cover-art timescale probe warning
+was retained in the report. The user confirmed playback with sound and a
+fresh app download that remuxed automatically.
+
+## 30 October — stock-iOS IPA preparation
+
+A separate **PornFetch Test** IPA was prepared for iLoader on Arch Linux,
+then SideStore. Its ID is `local.asuna.PornFetch.Sideload`; the original
+jailbreak installation was left alone. No Apple signing identity was configured
+on the Mac, so this is a re-signable ad-hoc package, not a provisioned distribution build.
+
+Packaging found and corrected:
+
+- Original jailbreak signatures were not valid Apple-tool signatures.
+- The private GPU entitlement must not be carried into stock provisioning.
+- 74 extension frameworks declared `APPL`; the packaged copy normalizes them to `FMWK`.
+- Copied `.o`, static/linker/CMake build artifacts do not belong in the runtime bundle.
+- `codesign`'s default entitlement display was human-readable `[Dict]`;
+  `--xml` produced parseable plist output.
+
+The resulting IPA is **93,709,928 bytes** (89.37 MiB), with 75 embedded
+frameworks and 8,300 ZIP entries. Its SHA-256 is
+`b45ae5db0a9957d14ec1c364ab36716353fb23dc8722cda100acf970beafc1b3`.
+All 76 executable images were ARM64 device iOS: 7 minimum-15 images and
+69 minimum-13 images. The app advertises minimum iOS 15. Every nested
+signature, `.fwork` path and archive CRC passed; the uploaded digest matched.
+
+**No stock-device installation or runtime result has been received.** This
+must remain separate from the jailbreak proof. Background downloads and
+memory-pressure behavior also remain unverified.
+
+## Guide repository adaptation
+
+The Android guide was cloned at commit `ec8b41c` and its history/layout retained:
+README, current notes, runtime chapter, source-build chapters and `scripts/`.
+Android helpers were replaced by iOS equivalents; the historical 6.11 filename
+now explains why no 6.11 iOS recipe is claimed. Donation/support links are retained.
+
+Unlike the original lab scripts, the new helpers use configurable work roots,
+explicit target selection and a source/hash manifest rather than a personal
+username, simulator UUID or phone address. They do not install to a phone,
+change global Xcode selection, or run live provider/account tests automatically.
+
+The generalized source-build helpers are adaptations of commands that built
+the reference artifacts. Do not interpret syntax/audit checks as a second
+clean source build or a completed three-target runtime matrix. Guide-specific
+verification details are recorded alongside the scripts and in the publishing commit.
+
+Guide-specific checks on 30 October:
+
+- Python sources and documented shell blocks parse; shell helpers parse under macOS Bash 3.2.
+- The device wheel pair passes inspection of 3,573 selected Mach-O objects, all minimum iOS 15.
+- The Intel simulator pair passes 8,331 selected objects, maximum minimum iOS 18. Embedded
+  FFmpeg XCFrameworks have additional slices; the auditor selects them using metadata.
+- Python device, ARM simulator and Intel simulator slices pass metadata/header/platform audits.
+- The auditor correctly rejects the official Intel wheels when asked for a maximum iOS 15 minimum.
+- The copied legacy Qt patch reverse-applies cleanly to the actual patched source used for the build.
+- The generic IPA helper packages the reference device app with 75 normalized frameworks,
+  valid relative extension markers, empty entitlements, verified signatures and valid ZIP CRCs.
+- The new minimal Hello World generates an Xcode project and **builds successfully for the Intel
+  simulator**. This check does not claim a new human runtime/touch test of that example.
+- The generic simulator destination initially attempted ARM64 as well as Intel; the quickstart now
+  selects `ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES`. With Xcode signing disabled, CPython's own build phase
+  also needed explicit `EXPANDED_CODE_SIGN_IDENTITY=-` instead of an empty identity. Both fixes are documented.
+- Local Markdown paths/anchors and public checksum endpoints for all three wheel targets were checked.
+
+Machine-readable results: [`scripts/validation.json`](scripts/validation.json).
+
+## Artifacts and provenance
+
+The [public application lab source snapshot](https://github.com/EchterAlsFake/Porn_Fetch/tree/ios/iphone7-port-snapshot-2026-10-28/ios-lab)
+contains the original scripts/reports. Its large build-state archive and IPA
+were placed in a **draft** release visible to the maintainer; public readers
+should not rely on access to those assets. This guide supplies public-source
+recipes, the actual Qt compatibility patch and a generic FFmpeg bridge instead.
+
+No private SSH keys, GPG keys, Apple credentials, personal runtime databases,
+downloaded media or signed media URLs are included in this guide.

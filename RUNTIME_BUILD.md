@@ -1,96 +1,194 @@
-# Android Python runtime and native dependencies
+# iOS Python runtime and native dependencies
 
-The helper [`scripts/build-android-runtime.sh`](scripts/build-android-runtime.sh)
-builds a CPython Android prefix with OpenSSL 3.5.8 LTS (`ssl`, `hashlib`), libffi
-(`ctypes`), bzip2 (`bz2`), xz (`lzma`), and SQLite (`sqlite3`). It puts the
-shared libraries beside `libpython` in the runtime prefix, where an APK
-packaging step can collect them. Source archive SHA-256 values are pinned in
-the script; downloaded archives are kept under `work/runtime-sources`.
+This mirrors the Android guide's runtime chapter, but does not pretend that
+an NDK recipe works on iOS. The reference embedded the official CPython
+3.15.0rc2 XCFramework and built third-party native modules for the selected
+Apple target. No Python executable or `pip` is installed system-wide on a stock phone.
 
-For the existing Qt 6.12.0 AArch64 installation, build a runtime and wheels:
+## Prepare and audit Python.xcframework
 
 ```bash
-bash scripts/build-android-runtime.sh --python-version 3.12 --abi aarch64 --with-wheels
-bash scripts/build-android-runtime.sh --python-version 3.13 --abi aarch64 --with-wheels
+bash scripts/build-ios-runtime.sh
+bash scripts/check-ios-runtime.sh "$PWD/work/python/3.15.0rc2/Python.xcframework" ios_arm64
 ```
 
-The default NDK is **r28c (`28.2.13676358`)** at
-`~/.pyside6_android_deploy/android-ndk/android-ndk-r28c`.
-When migrating from an existing build, select a new output root:
+Despite the mirrored helper name, the first command **downloads and prepares**
+the official runtime; it does not recompile CPython. It verifies SHA-256
+`2496d92689da625cd349e856e17b3d540787f8d17806e21536e8d394d940adc0`.
+Override `PYTHON_XCFRAMEWORK` to reuse an existing extraction. For a different
+embedded Python release, update the pins, rebuild matching bindings/extensions
+and follow CPython's `Platforms/Apple` instructions rather than renaming wheel tags.
+
+The official runtime supplies common `lib/python3.15` code and target slices:
+
+```text
+Python.xcframework/
+  lib/python3.15/
+  ios-arm64/Python.framework/
+  ios-arm64_x86_64-simulator/Python.framework/
+```
+
+The helper adds `include/python3.15` and `lib/libpython3.15.dylib` symlinks in
+the slices for CMake discovery. Keep the common standard library and matching
+architecture-specific stdlib extensions; copying only `Python.framework` is insufficient.
+
+The runtime audit checks the XCFramework metadata, selected CPU/platform,
+headers and common standard library. It cannot prove that `_ssl`, `_ctypes`
+or any third-party extension will work in an actual installed app.
+
+## Packaging pure Python and native extensions
+
+Keep package resources and `.dist-info`, not only `.py` files. The reference
+needed certificate bundles and metadata as well as Python source. Its vendor
+overlay was copied into the app's `packages` directory and placed on `sys.path`.
+
+For Xcode, add [`scripts/bundle-vendor.sh`](scripts/bundle-vendor.sh) **after**
+the generated Python copy phases and **before** final app signing. Set
+`VENDOR_DIR` to your staged iOS packages and `PYTHON_XCFRAMEWORK` to the same
+runtime used by PySide. The script copies full package trees and calls the
+runtime's `build/utils.sh` function `process_dylibs`.
+
+That converts each `.so` extension into a separately signed framework under
+`Frameworks/`, leaves a relative `.fwork` marker on the Python import path,
+and records the corresponding `.origin`. Do not invent an absolute path to
+your Mac or leave executable `.so` files loose inside package directories.
+See [CPython's packaging explanation](https://docs.python.org/3.15/using/ios.html).
+
+Before stock IPA packaging, check that every framework declares
+`CFBundlePackageType=FMWK`. The support script in our pinned runtime generated
+`APPL` for 74 extension frameworks; the IPA helper corrects these on a copy
+before re-signing. Also remove copied object/static build files from runtime
+resources. Qt/PySide's static modules are registered by the native launcher;
+ordinary third-party extensions use the CPython framework-loader route.
+
+## Native dependency reference
+
+These versions and results belong to the actual iPhone 7 experiment:
+
+| Dependency | Reference | Device result |
+| --- | --- | --- |
+| libffi / CFFI | 3.8.0 / 2.1.1 | libc call and callback passed |
+| chompjs | 1.4.1 | Parsed JavaScript object |
+| selectolax | 1.0.2 | Lexbor HTML/CSS query |
+| curl-cffi / curl-impersonate | 0.17.0 / 2.3.1 | Certificate-verified HTTPS, sync and asyncio |
+| cryptography / OpenSSL | 50.0.2 / 3.5.9 | Ed25519 verification and AES-GCM round trip |
+| FFmpeg | 9.0.2 | TS→MP4, metadata, cover art, native playback and full decode |
+
+Use target Python headers, `xcrun --sdk iphoneos`, and
+`-target arm64-apple-ios15.0` for the experimental device build. A simulator
+requires `iphonesimulator` and a `...-simulator` triple, even when ARM64.
+The output suffix was `.cpython-315-iphoneos.so`; CPython's packaging step
+later moves the executable code into its framework.
+
+### CFFI and libffi
+
+The first callback crashed in `ffi_prep_closure_loc` because CFFI's allocator
+did not match the target libffi's Apple trampoline-table configuration. The
+working CFFI build adds:
+
+```text
+-DFFI_AVAILABLE_APPLE=1 -DFFI_EXEC_TRAMPOLINE_TABLE=1
+```
+
+alongside its existing libffi include/archive, `FFI_BUILDING`, threading and
+synchronization definitions. Rebuilding only Python wrapper code is not enough.
+This tested configuration did not add a JIT entitlement. It is not a general
+instruction to enable executable-memory entitlements in a stock app.
+
+### chompjs and selectolax
+
+chompjs compiles its C module/parser/buffer against target Python. For
+selectolax, compile the generated Lexbor wrapper plus the Lexbor source set
+with `LEXBOR_STATIC` and the correct include root. Do not mix the simulator's
+objects into the device extension. Keep per-target object directories; compiling
+one source at a time with bounded parallelism worked within 16 GB RAM.
+
+### curl-cffi
+
+Generate the CFFI wrapper from the matching curl-cffi source and its `shim.h` /
+`shim.c`, then link the target curl-impersonate static archive, C++/zlib/iconv/
+resolver libraries and required Apple frameworks. Our device archive was
+`libcurl-ios-arm64.tar.gz` from curl-impersonate 2.3.1, SHA-256
+`16a3095fe0b107af2007be22b87c9f594658a04a22ad694abfd460f9bd70743e`.
+
+Preserve `certifi` data, and test both synchronous requests and `AsyncSession`.
+The reference probes used HTTPS to example.com, not a provider/account test.
+
+### cryptography / OpenSSL
+
+Build static OpenSSL for the selected iOS target, then use the matching Rust
+target (`aarch64-apple-ios` on the phone), SDKROOT, deployment minimum, target
+Python sysconfig data, headers and libpython compatibility view. The host and
+target Rust outputs must remain separate.
+
+An existing build-script branch intended for macOS needed narrowing from all
+Apple targets to `apple-darwin`; applying macOS runtime-linking assumptions to
+iOS broke cross-compilation. The resulting `_rust.abi3.so` still needs iOS
+framework packaging. Do not mistake its `abi3` suffix for cross-platform binary compatibility.
+
+The app logged OpenSSL's unavailable legacy provider. Modern HTTPS, Ed25519
+and AES-GCM tests passed; legacy cipher/provider behavior was not validated.
+
+The exact application-specific source recipes remain available in the
+[public lab source snapshot](https://github.com/EchterAlsFake/Porn_Fetch/tree/ios/iphone7-port-snapshot-2026-10-28/ios-lab).
+They are reference recipes, not a universal resolver for arbitrary native packages.
+
+## In-process FFmpeg remuxing
+
+An iOS Python app cannot rely on launching the desktop `ffmpeg` executable
+through `subprocess`. The working solution links libavformat/libavcodec/libavutil
+into `_ios_ffmpeg`, a small CPython extension. It releases the GIL during local
+file I/O and stream-copies audio/video into MP4 with `+faststart`; it does not encode video.
+
+The portable reference bridge and build helper are included:
 
 ```bash
-export WORK_ROOT="$PWD/work/r28c"
-export PYSIDE_FORK="$HOME/pyside-setup"
-export QT_PREFIX="$HOME/Qt/6.12.0"
-export QT_HOST_PREFIX="$QT_PREFIX/gcc_64"
-bash scripts/build-android-runtime.sh --python-version 3.11 --abi aarch64 --with-wheels
+python3.13 scripts/ffmpeg/build.py \
+    --xcframework /absolute/path/to/Python.xcframework \
+    --target ios_arm64 --min-ios 15.0 \
+    --work-root "$PWD/work-ios15/ffmpeg" \
+    --output "$PWD/work-ios15/vendor" --jobs 4
 ```
 
-Keep `PYSIDE_FORK` pointed at the companion fork's `android-cross-build-fixes`
-checkout. Runtime prefixes record the NDK revision and native API in
-`.android-toolchain`; the helper refuses older or unrecorded cached prefixes
-instead of reusing r27c binaries after the switch. Downloaded source archives
-and host interpreters can be reused; native dependencies, target Python, and
-wheel build trees must be fresh for a clean build.
-Runtime audits also check this provenance, so `RESUME=1` does not skip an
-older runtime merely because its ELF architecture and alignment pass.
+Use `18.0` for the supported baseline. Device output has the matching CPython
+3.15 suffix and must go through the vendor/framework packaging phase. The
+device bridge was run in the real app; the generalized build wrapper and its
+simulator options are adaptations, not a new runtime test matrix.
 
-Build Qt, runtimes, and both wheels for all four Android ABIs and Python
-3.10–3.14 with one command:
+Python usage after packaging:
 
-```bash
-bash scripts/rebuild-android-matrix.sh
+```python
+import _ios_ffmpeg
+packets = _ios_ffmpeg.remux('/writable/input.ts', '/writable/output.mp4',
+                            {'title': 'Local video'}, None)
 ```
 
-This uses the source-built host Qt and builds missing Android Qt prefixes
-through `scripts/build-qt-android.sh`. It runs each target sequentially and
-stores per-target logs under `work/logs/matrix-<UTC timestamp>/`. It moves
-prior PySide target build trees into `work/previous-target-builds/` so CMake
-does not reuse toolchain settings from an older build. Set `ABIS` or
-`PYTHON_VERSIONS` to a space-separated subset to resume part of the matrix,
-and `JOBS` to control parallel compilation within each target. Set `RESUME=1`
-after an interruption to skip pairs that pass both audits and reuse the
-current CMake target build tree for an unfinished pair.
-After the build, audit the complete matrix with
-`bash scripts/check-android-matrix.sh`; it checks each runtime and wheel pair.
+The fourth argument optionally names a JPEG/PNG cover file. Input and output
+must be different files. For tagging an existing MP4, write a temporary output
+and replace the original only after success. Run this blocking operation with
+`await asyncio.to_thread(...)` in an asynchronous app; no QThread is required.
 
-Each call builds a matching host CPython if it is absent, then the Android
-libraries and target CPython. Dependencies are shared by Python versions for
-the same ABI and native API. The target Python prefix is placed in the cache
-path consumed by the companion PySide helper. Wheel outputs are copied to
-`work/wheels/py312` or `work/wheels/py313`.
+FFmpeg's `aac_adtstoasc` filter is included for ADTS AAC, and the MP4 muxer
+inserts the required conversion. [FFmpeg documents this behavior](https://ffmpeg.org/ffmpeg-bitstream-filters.html#aac_005fadtstoasc).
+The build disables GPL/version3/nonfree/network features and all encoders.
+It retains license/configuration files beside the extension; the upstream
+source archive and static libraries remain in the work directory.
 
-Validate a built runtime with:
+Do not equate a `.mp4` extension with an MP4 container: our 425 MiB download
+was MPEG-TS. The phone remux took 4.893 s. AVFoundation then decoded both video
+and audio; an independent full-file check decoded 31,040 video frames and
+44,562 audio frames with zero corrupt packets or decoding errors. The user
+confirmed playback and a fresh download's automatic remux.
 
-```bash
-bash scripts/check-android-runtime.sh 3.12 aarch64
-```
+## Runtime limits
 
-The check requires the expected extension modules, Android ELF architecture,
-and 16 KiB load alignment for every shared object in the runtime prefix.
-Wheel builds run `scripts/check-android-wheels.py` automatically. This checks
-the wheel tags, archive integrity, architecture, and load alignment of every
-packaged shared object, including Shiboken and Qt plugins.
+- Use app-owned Documents/Application Support/Cache paths. `sys.platform` is
+  `ios` on both simulator and device; Darwin alone does not mean macOS.
+- Keep desktop services and Android-only APIs out of the iOS composition root.
+- No account, licensing or provider test runs automatically in these helpers.
+- Background transfers and memory-pressure behavior remain unverified.
+- Our IPA packaging/signature checks do not prove stock-iOS native-module behavior.
 
-The runtime source checkout's exact CPython commit is written to
-`python-source-commit.txt` inside its target prefix. The native library source
-versions and archive checksums are pinned in the build script.
-
-Use `--abi armv7a`, `--abi i686`, or `--abi x86_64` when the corresponding Qt
-Android prefix is available. Set `ANDROID_NDK_ROOT`, `ANDROID_SDK_ROOT`,
-`QT_PREFIX`, `QT_HOST_PREFIX`, `PYSIDE_FORK`, `WORK_ROOT`, `ANDROID_NATIVE_API`,
-or `JOBS` to override the defaults. Without `--with-wheels`, only the runtime
-and its native libraries are built.
-
-On Arch Linux and derivatives, add `--install-arch-deps` to allow the helper to
-install host build packages with `sudo pacman`. This step is optional; normally
-the helper just reports missing tools. It does not change installed packages
-unless the flag is given.
-
-The build uses NDK r28c native API 35 by default, separate from the SDK API
-36 used by Qt's Java sources. The Qt prefix in this checkout was built without
-Android OpenSSL, so its QtNetwork HTTPS support remains disabled even when
-Python's `ssl` module is present. Rebuilding Qt with an Android OpenSSL prefix
-is required to enable that Qt feature. An APK must include the runtime's
-shared libraries and standard library, and should be tested on a device or
-emulator before release.
+Primary references: [CPython iOS](https://docs.python.org/3.15/using/ios.html),
+[FFmpeg remuxing example](https://github.com/FFmpeg/FFmpeg/blob/n9.0.2/doc/examples/remux.c),
+[Apple bundle types](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundlepackagetype).

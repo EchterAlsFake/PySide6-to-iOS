@@ -1,43 +1,58 @@
-# PySide6 on Android — Practical Guide
+# PySide6 on iOS — Practical Guide
 
 > [!CAUTION]
-> Because of the next exams in school and my focus shifting entirely to my other projects, I am heavily
-using AI to maintain this project. Everything you see is tested by a human!
-
-If you have a problem with that, make your own :) 
+> This guide uses AI-assisted maintenance. Phone milestones marked verified were checked by a human.
+> Newly adapted automation is identified separately in [current build notes](CURRENT_BUILD_NOTES.md).
+> A successful compile or IPA signature check is **not** a successful stock-iOS runtime test.
 
 > [!NOTE]
-> This guide is **unofficial** and not affiliated with Qt. For authoritative details on the Android toolchain and the
-> overall process, see the official documentation and blog posts:
-> - [Taking Qt for Python to Android](https://www.qt.io/blog/taking-qt-for-python-to-android)
-> - [Qt for Python v6.8 announcement](https://www.qt.io/blog/qt-for-python-release-6.8)
+> This guide is **unofficial** and not affiliated with Qt. It mirrors the structure of
+> [PySide6-to-Android](https://github.com/EchterAlsFake/PySide6-to-Android), adapted from our iOS build work.
+> Authoritative references:
+> - [Qt's iOS deployment tool](https://doc.qt.io/qtforpython-6/deployment/deployment-pyside6-ios-deploy.html)
+> - [Qt for iOS](https://doc.qt.io/qt-6/ios.html)
+> - [CPython on iOS](https://docs.python.org/3.15/using/ios.html)
 
 > [!IMPORTANT]
-> Building and shipping **PySide6** apps to Android is non‑trivial. Read this guide **end‑to‑end** before you start—
-> the pitfalls are real, and many of them are captured here so you don’t have to rediscover them. 🙂
+> Read the guide end-to-end. iOS is not Android with a different filename: device and simulator
+> binaries differ, Qt/PySide are linked statically, native Python extensions need framework packaging,
+> and a stock phone requires Apple signing/provisioning.
 
 ---
 
 ## Supported Versions
 
-- **Qt / PySide6:** `6.12.0`
-- **Android NDK for this fork:** r28c (`28.2.13676358`)
-- **Official Android wheels:** Python `3.10`–`3.14` (`cp310-abi3`), AArch64 and x86_64
-- **Experimental source builds from the companion fork:** Python `3.10`–`3.14` across all 4 architectures (`aarch64`, `armv7a`, `i686`, `x86_64`)
+| Component | Reference build | Meaning |
+| --- | --- | --- |
+| Qt / PySide6 / shiboken6 | **6.12.0**, matching versions | Reference iOS deployment toolchain |
+| Host | Intel macOS 15.7.2 VM | Apple Silicon needs a different simulator target |
+| Xcode | **26.3**, iPhoneOS/Simulator **26.2** SDKs | Full Xcode, not just Command Line Tools |
+| Host Python | **3.13.16** | Runs tools; does not become the embedded interpreter |
+| Embedded Python | **3.15.0rc2**, `cp315-cp315` | Pinned reference; not Android's `cp310-abi3` wheels |
+| Official Qt baseline | **iOS 18+** | [Supported platforms](https://doc.qt.io/qt-6/supported-platforms.html) |
+| Experimental legacy target | **iOS 15.0**, ARM64 | Custom source build/patch; iPhone 7, iOS 15.8.8, palera1n rootless |
 
-> [!NOTE]
-> Starting with Qt 6.12, official Android wheels are compiled with PEP 384 Limited API (`cp310-abi3`), making them compatible across Python 3.10, 3.11, 3.12, 3.13, and 3.14 on supported 64-bit platforms (`aarch64` and `x86_64`). 32-bit architectures (`armv7a`, `i686`) were dropped upstream and require our companion fork source builds.
+Python 3.15.0rc2 is the exact embedded release used here, not advice to replace a newer host Python.
+Changing it requires matching wheels and native extensions.
+
+**Verified:** Intel simulator launch; physical Python + Qt; Material/QML rendering and touch;
+CFFI callbacks; chompjs; selectolax; curl-cffi sync/async HTTPS; cryptography; a real application's
+download → in-process FFmpeg remux → video/audio playback workflow on the jailbroken iPhone 7.
+
+**Prepared, not runtime-verified:** a stock-iOS IPA for iLoader/SideStore. Its layout, nested
+signatures and archive integrity pass checks. Stock installation, rendering and downloads still
+need testing. Apple Silicon simulator and clean rebuilds of all generalized helpers are not claimed verified.
 
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Get Prebuilt Android Wheels](#get-prebuilt-android-wheels)
-- [Environment Setup (SDK/NDK)](#environment-setup-sdkndk)
-- [Build the APK](#build-the-apk)
-  - [Configure `buildozer.spec`](#configure-buildozerspec)
-  - [Optional: Pause `pyside6-android-deploy` to tweak config](#optional-pause-pyside6-android-deploy-to-tweak-config)
+- [Get Prebuilt iOS Wheels](#get-prebuilt-ios-wheels)
+- [Environment Setup (Xcode/SDK)](#environment-setup-xcodesdk)
+- [Build the App / IPA](#build-the-app--ipa)
+  - [Configure `pysidedeploy.spec`](#configure-pysidedeployspec)
+  - [Optional: Generate config before the project](#optional-generate-config-before-the-project)
   - [Run the final build](#run-the-final-build)
   - [Install & Debug on Device](#install--debug-on-device)
 - [Common Errors & Fixes](#common-errors--fixes)
@@ -49,323 +64,318 @@ If you have a problem with that, make your own :)
 ---
 
 ## Overview
-Android devices typically use one of four CPU architectures: `armv7`, `aarch64`, `x86_64`, `i686`.  
-To maximize compatibility, you’ll often want to build for multiple architectures. The official
-`pyside6-android-deploy` tool orchestrates most of the process.
+
+An iOS app embeds Python. `pyside6-ios-deploy` generates an **Xcode project**, not a finished IPA.
+Xcode builds a native launcher, links the selected Qt/PySide/plugins, and bundles the runtime and code.
+
+| Wheel platform | CPU | Destination | Reference status |
+| --- | --- | --- | --- |
+| `ios_arm64` | ARM64 | Physical iPhone/iPad | Custom iOS 15 build verified on jailbroken phone |
+| `ios_arm64_simulator` | ARM64 | Apple Silicon simulator | Documented, not exercised on this Intel host |
+| `ios_x86_64_simulator` | x86_64 | Intel simulator | Prebuilt-wheel path verified |
+
+An ARM64 simulator wheel is **not** an ARM64 device wheel. The CPU matches; the platform/ABI does not.
+Keep target Qt prefixes, unpacked wheel caches and build directories separate.
 
 ---
 
-## Get Prebuilt Android Wheels
-Since Qt 6.8, **official Android wheels** are published and are the **recommended** route.
-You’ll save hours of compilation time and avoid a lot of complexity.
+## Get Prebuilt iOS Wheels
 
-- Public archive: `https://download.qt.io/official_releases/QtForPython/`
+Get matching **iOS** PySide6/shiboken6 wheels. Desktop wheels installed with `pip` supply host tools.
+Do not install target wheels into the host environment.
 
-> [!NOTE]
-> Official Android wheels are published for **`aarch64`** and **`x86_64`**. For Qt 6.12.0, they use the `cp310-abi3` limited API tag, supporting Python 3.10 through 3.14 out of the box.
+Public archive: `https://download.qt.io/official_releases/QtForPython/`.
+The 6.12.0 / Python 3.15 pair uses:
 
-**Direct links for 6.12.0 (Python 3.10–3.14 abi3):**
+```text
+pyside6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl
+shiboken6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl
 
-- **PySide6**
-  - [aarch64](https://download.qt.io/official_releases/QtForPython/pyside6/pyside6-6.12.0-6.12.0-cp310-abi3-android_aarch64.whl)
-  - [x86_64](https://download.qt.io/official_releases/QtForPython/pyside6/pyside6-6.12.0-6.12.0-cp310-abi3-android_x86_64.whl)
+pyside6-6.12.0-6.12.0-cp315-cp315-ios_arm64_simulator.whl
+shiboken6-6.12.0-6.12.0-cp315-cp315-ios_arm64_simulator.whl
 
-- **Shiboken6**
-  - [aarch64](https://download.qt.io/official_releases/QtForPython/shiboken6/shiboken6-6.12.0-6.12.0-cp310-abi3-android_aarch64.whl)
-  - [x86_64](https://download.qt.io/official_releases/QtForPython/shiboken6/shiboken6-6.12.0-6.12.0-cp310-abi3-android_x86_64.whl)
-
-
-If you prefer building your own wheels, see [Building Qt and the Wheels Yourself](#building-qt-and-the-wheels-yourself).
-Wheels compiled by myself may also be available on the project’s GitHub Releases page, but use them **at your own risk**.
-
----
-
-## Environment Setup (SDK/NDK)
-
-To build an APK, you need both the **Android SDK** and **Android NDK**. You can install them manually, but the
-Qt-provided helper is convenient.
-
-### Install base dependencies (example: Arch Linux)
-Although not strictly required, the following set is a good baseline:
-
-```bash
-sudo pacman -Syu base-devel android-tools android-udev clang jdk21-openjdk llvm openssl cmake wget git zip
+pyside6-6.12.0-6.12.0-cp315-cp315-ios_x86_64_simulator.whl
+shiboken6-6.12.0-6.12.0-cp315-cp315-ios_x86_64_simulator.whl
 ```
 
-### Fetch SDK & NDK with `pyside-setup` helper
+Download a pair and verify its published checksums:
 
 ```bash
-cd ~/
-git clone https://github.com/EchterAlsFake/pyside-setup
-cd pyside-setup
-git checkout android-cross-build-fixes
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-pip install -r tools/cross_compile_android/requirements.txt
-python tools/cross_compile_android/main.py --download-only --auto-accept-license
+export GUIDE_ROOT="$PWD"  # run from this repository
+export WORK_ROOT="$GUIDE_ROOT/work"
+export TARGET=ios_x86_64_simulator  # Intel; select the appropriate row above
+mkdir -p "$WORK_ROOT/wheels/$TARGET"
+cd "$WORK_ROOT/wheels/$TARGET"
+for package in pyside6 shiboken6; do
+    wheel="$package-6.12.0-6.12.0-cp315-cp315-$TARGET.whl"
+    url="https://download.qt.io/official_releases/QtForPython/$package/$wheel"
+    curl -fL --retry 3 "$url" -o "$wheel"
+    curl -fL --retry 3 "$url.sha256" -o "$wheel.sha256"
+    shasum -a 256 -c "$wheel.sha256"
+done
+cd "$GUIDE_ROOT"
+python3.13 scripts/check-ios-wheels.py "$WORK_ROOT/wheels/$TARGET" --target "$TARGET"
 ```
 
-> [!IMPORTANT]
-> If you prefer to review licenses manually, omit `--auto-accept-license` and add `--verbose` so the license text is shown.
+The upstream `qtpip download PySide6 --ios --arch arm64 --platform device` route is another option.
+Here, qtpip 0.2.0 requested commercial credentials and direct public files worked. That observation
+does not establish access to every Qt package or future download.
 
-After running the script, the tools are placed at:
-
-- **Android SDK:** `~/.pyside6_android_deploy/android-sdk/`
-- **Android NDK:** `~/.pyside6_android_deploy/android-ndk/android-ndk-r28c/`
-
-This guide and the companion fork use **r28c** for native builds and
-`pyside6-android-deploy`. Qt's prebuilt Android libraries may still have been
-built with r27c; using them does not rebuild Qt with r28c. This is the fork's
-tested toolchain choice, separate from [Qt's supported NDK configuration](https://doc.qt.io/qt-6/android.html#supported-configurations).
-Existing `pysidedeploy.spec` and `buildozer.spec` files retain explicit NDK
-paths: update those paths, or pass `--ndk-path` below, when migrating.
+Prebuilt wheels keep Qt's newer iOS baseline. For iPhone 7/iOS 15, follow the
+[custom source-build path](SOURCE_BUILD_6.12.md#experimental-ios-15-path), not a plist edit alone.
 
 ---
 
-## Build the APK
+## Environment Setup (Xcode/SDK)
 
-### Configure `buildozer.spec`
+### Install base dependencies (macOS)
 
-> [!NOTE]
-> `buildozer` (using **Python‑for‑Android** under the hood) handles packaging. Its `buildozer.spec` file
-> controls app metadata, permissions, dependencies, orientation, and more.
+Install full Xcode and open it once to finish initial setup. With Homebrew already available:
 
-Key options you’ll likely touch:
+```bash
+brew install cmake ninja git python@3.13 pkgconf autoconf automake libtool
+```
 
-- `requirements`: Comma‑separated list of Python dependencies your app needs.
-- `icon.filename`: App icon file (`.png` or `.jpg`). See Android’s
-  [Adaptive Icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive).
-- `title`: App display name.
-- `version`: App version (e.g., `1.1`).
-- `android.permissions`: Requested Android permissions. See
-  [Manifest.permission](https://developer.android.com/reference/android/Manifest.permission).
-- `package.name`: Output package name.
-- `package.domain`: Reverse‑DNS app identifier (unique in the Android ecosystem).
-- `orientation`: `portrait` or `landscape`.
-- `android.api`: Target API level (use current stable / highest you can).
-- `android.minapi`: Minimum supported API. Qt 6.12 requires API 28 or newer;
-  your other native libraries may require a higher value.
+Select Xcode **for this terminal**, without changing the whole machine:
 
-Every dependency containing native code needs an Android wheel for the same
-ABI, or a compatible python-for-android recipe. Pure-Python packages can
-usually be packaged directly. Avoid carrying old desktop-specific pins into a
-new build unless the current resolver output proves they are still necessary.
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+# If kept in Downloads:
+# export DEVELOPER_DIR="$HOME/Downloads/Xcode.app/Contents/Developer"
+xcodebuild -version
+xcrun --sdk iphoneos --show-sdk-path
+xcrun --sdk iphonesimulator --show-sdk-path
+```
 
-### Optional: Pause `pyside6-android-deploy` to tweak config
+Keep the deployment virtualenv outside the app's own folder:
 
-By default, `pyside6-android-deploy` immediately starts the build and doesn’t give you a chance to edit
-`buildozer.spec`. You can add a simple pause:
+```bash
+python3.13 -m venv "$WORK_ROOT/venvs/deploy"
+source "$WORK_ROOT/venvs/deploy/bin/activate"
+python -m pip install 'PySide6-Essentials==6.12.0'
+requirements=$(python -c 'import pathlib,PySide6; print(pathlib.Path(PySide6.__file__).parent / "scripts/requirements-ios.txt")')
+python -m pip install -r "$requirements"
+pyside6-ios-deploy --help
+```
 
-1. Activate your virtualenv and locate the PySide6 scripts folder (e.g. `venv/lib/python3.11/site-packages/PySide6/scripts/`).
-2. Open `android_deploy.py`.
-3. Find the line:
-   ```python
-   logging.info("[DEPLOY] Running buildozer deployment")
-   ```
-4. Insert this line **above** it:
-   ```python
-   input("Modify your buildozer.spec now and press Enter to continue...")
-   ```
+On Intel, install an Intel-capable simulator runtime. This can be a large download:
 
-Now the build will pause so you can edit `buildozer.spec` before it proceeds.
+```bash
+xcodebuild -downloadPlatform iOS -architectureVariant universal
+xcrun simctl list runtimes
+xcrun simctl list devices available
+```
+
+The reference used 16 GB RAM and later 8 virtual CPUs. Extra RAM was unnecessary; disk space mattered
+more. Keep tens of GB free for SDKs, Qt objects and intermediates. The retained lab was about 21 GB,
+excluding Xcode and simulator data. Build as your normal graphical-login user, not root.
+
+---
+
+## Build the App / IPA
+
+### Configure `pysidedeploy.spec`
+
+There is no `buildozer.spec` for this route. Useful `[ios]` options in `pysidedeploy.spec` are:
+
+- `wheel_pyside`, `wheel_shiboken`: matching files; their platform tags choose the destination.
+- `xcframework_path`: official Python runtime or the tool's automatically populated cache.
+- `bundle_id`: your unique reverse-DNS identifier.
+- `team_id`, `signing_style`: your Apple team and signing configuration.
+- `deployment_target`: normally leave empty for Qt's baseline; lower only with a compatible rebuilt kit.
+- `entitlements`: optional plist; stock provisioning must authorize requested entitlements.
+
+`[qt] modules` and `qml_files` control which bindings/resources are linked and registered. Inspect
+generated `main.mm` when an import or QML plugin is missing: static registration happens before Python starts.
+
+### Optional: Generate config before the project
+
+Use upstream `--init`; an interactive pause patched into the deployment script is unnecessary:
+
+```bash
+mkdir -p "$WORK_ROOT/apps/hello"
+cp "$GUIDE_ROOT/scripts/examples/hello/"* "$WORK_ROOT/apps/hello/"
+cd "$WORK_ROOT/apps/hello"
+pyside6-ios-deploy main.py --init --name HelloIOS \
+    --bundle-id com.example.HelloIOS \
+    --wheel-pyside "$WORK_ROOT/wheels/$TARGET/pyside6-6.12.0-6.12.0-cp315-cp315-$TARGET.whl" \
+    --wheel-shiboken "$WORK_ROOT/wheels/$TARGET/shiboken6-6.12.0-6.12.0-cp315-cp315-$TARGET.whl"
+# Review pysidedeploy.spec; add your own [ios] team_id for device signing.
+pyside6-ios-deploy -c pysidedeploy.spec
+```
+
+`--init` still validates/unpacks wheels and may download Python. Later, pass `-c` explicitly to
+reuse config without repeating wheel arguments. It is not an offline no-op.
 
 ### Run the final build
 
-> [!IMPORTANT]
-> Name your entry script **`main.py`**.
-
-From your project’s source directory, run:
+Open `deployment/$TARGET/HelloIOS.xcodeproj` in Xcode. Choose a destination matching your wheels.
+For an Intel simulator, a command-line build is:
 
 ```bash
-pyside6-android-deploy \
-    --wheel-pyside=/path/to/pyside6-6.12.0-...-android_<arch>.whl \
-    --wheel-shiboken=/path/to/shiboken6-6.12.0-...-android_<arch>.whl \
-    --name=main \
-    --ndk-path ~/.pyside6_android_deploy/android-ndk/android-ndk-r28c \
-    --sdk-path ~/.pyside6_android_deploy/android-sdk/
+xcodebuild -project "deployment/$TARGET/HelloIOS.xcodeproj" \
+    -scheme HelloIOS -configuration Debug -sdk iphonesimulator \
+    -destination 'generic/platform=iOS Simulator' -derivedDataPath "$WORK_ROOT/derived/hello-$TARGET" \
+    ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGN_IDENTITY=- EXPANDED_CODE_SIGN_IDENTITY=- \
+    EXPANDED_CODE_SIGN_IDENTITY_NAME=ad-hoc build
 ```
 
-**Arguments explained**
+For a stock device, configure **Signing & Capabilities** with your own team and unique ID. Use
+Xcode's archive/export workflow for a provisioned distribution IPA. No Apple signing identity was
+available in this VM; its experimental stock IPA instead needs iLoader/SideStore to re-sign it.
+GPG signing a Git commit does **not** sign an iOS app.
 
-- `--wheel-pyside`: The PySide6 Android wheel you downloaded (per architecture).
-- `--wheel-shiboken`: The matching Shiboken6 Android wheel.
-- `--name`: Your application name (entry point is `main.py`).
-- `--ndk-path`: Path to your Android NDK.
-- `--sdk-path`: Path to your Android SDK.
+The simulator command supplies `-` explicitly because CPython's build phase signs extension
+frameworks itself even when Xcode's own signing is disabled. An empty expanded identity caused
+“The specified item could not be found in the keychain.” These ad-hoc overrides are for the
+unsigned simulator/re-signing workflow, not a replacement for your stock-device identity.
 
-If everything goes well, you’ll end up with an **`.apk`** for the specified architecture.
+To package a built **device** `.app` for that re-signing workflow:
+
+```bash
+python3.13 "$GUIDE_ROOT/scripts/package-ipa.py" \
+    --app /absolute/path/to/HelloIOS.app \
+    --output "$WORK_ROOT/HelloIOS-sideload.ipa" \
+    --bundle-id com.example.HelloIOS.Sideload --display-name 'Hello iOS Test'
+```
+
+The helper copies the app, normalizes framework metadata, removes build-only objects, signs
+frameworks before the main app, and verifies the ZIP. Its **empty entitlements and ad-hoc signatures**
+still require Apple Account re-signing/provisioning. It cannot turn simulator code into device code.
+It removes the copied Qt build-kit `packages/PySide6/Qt/lib` tree while retaining QML resources;
+runtime dylibs must already be embedded in the app's `Frameworks` directory. Additional module
+stacks such as Qt Multimedia need their own dependency collection and are not a verified matrix here.
 
 ### Install & Debug on Device
 
-Using **ADB** is the most reliable way to install and debug quickly:
-
-1. Enable Developer Options (tap “Build number” multiple times).
-2. Enable **USB debugging** (or **Wireless debugging** if applicable).
-3. Install platform tools:
-   - **Arch Linux:** `sudo pacman -S android-tools`
-   - **Ubuntu/Debian:** `sudo apt install android-tools-adb android-tools-fastboot`
-   - **Windows/macOS:** Install [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools).
-
-4. Verify device connection:
-   ```bash
-   adb devices
-   ```
-   Confirm the authorization dialog on your device, then run `adb devices` again.
-
-Alternatively, you can also use Android Studio to install and run your application.
-Android studio will provide you automatically with detailed logging.
-
-**Core commands**
+**Simulator:**
 
 ```bash
-# Install your build
-adb install /path/to/your.apk
-
-# Stream logs (replace with your final package name)
-adb logcat --regex "com.example.yourapp"
+xcrun simctl list devices available
+export SIMULATOR_ID=YOUR_SIMULATOR_UUID
+xcrun simctl boot "$SIMULATOR_ID"  # omit if already booted
+open "$DEVELOPER_DIR/Applications/Simulator.app"
+xcrun simctl bootstatus "$SIMULATOR_ID" -b
+xcrun simctl install "$SIMULATOR_ID" /absolute/path/to/HelloIOS.app
+xcrun simctl launch --console "$SIMULATOR_ID" com.example.HelloIOS
 ```
 
-Once installed, the app appears in your launcher. In **App info**, you’ll typically see something like:
+Use the ID in built `Info.plist`, not the process/display name. These overrides made Qt Quick render
+through OpenGL in the no-GPU Intel VM:
 
+```bash
+SIMCTL_CHILD_QT_QUICK_BACKEND=rhi SIMCTL_CHILD_QSG_RHI_BACKEND=opengl \
+SIMCTL_CHILD_QSG_RENDER_LOOP=basic \
+xcrun simctl launch --console "$SIMULATOR_ID" com.example.HelloIOS
 ```
-Version 2.1.6
-com.example.yourapp
-```
 
-The first line is the human‑readable app version; the second line is your package ID. Use `adb logcat` while
-launching the app to capture crashes and diagnostics.
+Those are **VM simulator overrides**. Do not force them onto the phone; the verified phone uses Metal.
 
-> [!NOTE]
-> Steps may vary slightly by device/Android version. If you get stuck, search on Google, Stack Overflow, or XDA.
+**Stock phone:** use Xcode, or import the device IPA into [iLoader](https://github.com/nab138/iloader)
+or [SideStore](https://docs.sidestore.io/docs/installation/install) and let it re-sign with your account.
+Connect/trust the host, then trust the developer under Settings → General → VPN & Device Management
+if asked. iOS 15 has no iOS 16 Developer Mode switch. Stock installation does not use SSH.
+
+**Jailbreak experiment:** we used palera1n rootless, an SSH key, `ldid`, `/var/jb/Applications`,
+`uicache` and `uiopen`. This is separate from normal iOS deployment, not a PySide6 requirement.
+Rootless may provide `/var/jb/usr/bin/sh` instead of `/bin/sh`.
+See [current build notes](CURRENT_BUILD_NOTES.md#jailbreak-deployment-and-metal).
 
 ---
 
 ## Common Errors & Fixes
 
-- **RuntimeError — “You are including a lot of QML files from a local venv…”**  
-  Ensure your **virtual environment is _not_ inside your project folder**. Create it elsewhere and delete the old one:
-  ```bash
-  rm -rf venv .venv
-  ```
-  (This appears to be a Qt quirk and may improve in future releases.)
-
-- **“C compiler cannot create executables”**  
-  Often caused by targeting too high an API level for the available toolchains. Inspect the toolchain directory indicated
-  in the error and check the highest available `androidclangXX-` version; use a matching or lower API level.
-
-- **“… is for x86_64 architecture, not aarch64” (or similar)**  
-  Verify that each third‑party wheel you depend on has an Android build for your target architecture. If not, you may need
-  to provide/build a recipe (expect significant effort).
-
-- **`DeadObjectException` (e.g., “Couldn't insert … into …”)**  
-  This is a generic failure that can have many causes—often trying to access a resource that doesn’t exist or is
-  inaccessible. Check file paths, storage permissions, and logging calls. If you see this, jump to the
-  [Debugging Strategy](#debugging-strategy-highly-recommended).
-
-- **`ModuleNotFoundError: No module named <your_module>`**  
-  Some libraries pull in additional dependencies you must list explicitly under `requirements`. For example, using `httpx`
-  may require `httpx`, `httpcore`, `idna`, `certifi`, `h11`, and `sniffio`. Inspect dependency trees and include all
-  required packages.
+| Symptom | What to check |
+| --- | --- |
+| iOS SDK not found | Full Xcode and `DEVELOPER_DIR`, not only CommandLineTools |
+| `pip` rejects the target wheel | Expected; feed it to `pyside6-ios-deploy` |
+| ARM64 code cannot run on device | Device vs simulator platform: inspect `LC_BUILD_VERSION`, not only CPU |
+| Generic simulator build tries ARM64 with Intel wheels | Pass `ARCHS=x86_64 ONLY_ACTIVE_ARCH=YES`; Apple Silicon uses `ARCHS=arm64` |
+| Minimum iOS rejected | Rebuild compatible Qt/PySide or use supported iOS; plist edits do not replace new APIs |
+| CMake cannot find target Python | Supply the `include/python3.15` and `lib/libpython3.15.dylib` compatibility view |
+| Quick wrappers cannot find OpenGL headers | Build `Core,Gui,Network,OpenGL,Svg,Qml,Quick,QuickControls2` in that order |
+| CFFI callback crashes in `ffi_prep_closure_loc` | Match CFFI Apple trampoline-table defines to target libffi |
+| Missing PySide/QML module | Check static registration/plugins; regenerate after changing module selection |
+| Missing certifi/data/`.dist-info` | Preserve package trees and metadata; `.py`-only copying is insufficient |
+| Read-only bundle writes | Use Documents/Application Support/Cache in the data container |
+| `subprocess` unavailable | Expected iOS restriction; use an in-process library such as the FFmpeg bridge |
+| `.mp4` will not play | Check container format; MPEG-TS renamed `.mp4` still needs remuxing |
+| Black screen with live process | Check scene/window exposure and Metal; offscreen painting is not screen presentation |
+| IPA entitlement/signature error | Re-sign/provision, remove private jailbreak entitlements and verify every framework |
+| Python copy phase reports a missing keychain item | Supply the explicit ad-hoc expanded identity in the simulator command above |
+| Framework labeled `APPL` | Normalize to `FMWK` before signing |
+| `codesign` prints `[Dict]` | Add `--xml` when parsing its entitlement output with `plistlib` |
 
 ---
 
 ## Debugging Strategy (Highly Recommended)
 
-> [!IMPORTANT]
-> Expect the **first run to crash** while you sort out packaging details. Proactive logging helps you pinpoint the issue fast.
-
-Add a minimal HTTP logger that works without external dependencies:
+Prove one layer at a time: UIKit → embedded Python → Qt window → QML/touch → native dependencies → full app.
+Write a local startup log before depending on external networking:
 
 ```python
-import http.client
-import json
+from pathlib import Path
+import os, sys, traceback
 
-def send_error_log(message: str):
-    url = "<your_pc_ip>:8000"  # e.g. 192.168.1.23:8000
-    endpoint = "/error-log/"
-    data = json.dumps({"message": message})
-    headers = {"Content-type": "application/json"}
-    conn = http.client.HTTPConnection(url)
-    conn.request("POST", endpoint, data, headers)
+working = Path.home() / 'Documents' / 'MyApp'
+working.mkdir(parents=True, exist_ok=True)
+os.chdir(working)
+sys.stdout = (working / 'ios-runtime.log').open('w', buffering=1)
+sys.stderr = sys.stdout
+
+from PySide6.QtCore import qInstallMessageHandler
+qInstallMessageHandler(lambda kind, context, message: print(message, flush=True))
+print('Python entry reached', sys.version, sys.platform, flush=True)
 ```
 
-Sprinkle `send_error_log("reached step X")` through critical code paths to find the exact crash point.
+Wrap your own entry function in exception handling and log `traceback.print_exc()` before re-raising.
+For failures before Python starts, use Xcode's device console/crash organizer or macOS Console.
+On stock iOS, do not assume SSH exists.
 
-**Simple receiver (FastAPI):**
-
-```python
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-class ErrorLog(BaseModel):
-    message: str
-
-app = FastAPI()
-
-@app.post("/error-log/")
-def receive_error_log(error_log: ErrorLog):
-    print(f"Received error: {error_log.message}")
-    return {"detail": "Error log received"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-Run this on your computer or another device on the same network:
-```
-pip install fastapi pydantic uvicorn
-```
-
-> [!IMPORTANT]
-> Use **JDK 21 or newer** with Qt 6.12. Older JDK 17 instructions apply to
-> earlier Qt releases and fail the current toolchain requirement.
+Our black-screen failure survived successful offscreen painting. Useful checks were
+`MTLCreateSystemDefaultDevice()`, window/scene attachment, exposure and actual frame presentation.
+The final touch counter was read back from the phone, not inferred from compilation.
 
 ---
 
 ## Building Qt and the Wheels Yourself
 
-The old workflow required editing `PYTHON_VERSION`, hand-fixing an ARM
-toolchain after generation, and repeatedly deleting a shared cache. Those
-workarounds are replaced by the companion
-[`pyside-setup-android`](https://github.com/EchterAlsFake/pyside-setup)
-fork (branch `android-cross-build-fixes`).
+See [SOURCE_BUILD_6.12.md](SOURCE_BUILD_6.12.md): matching host tools, static device Qt, iOS 15
+compatibility changes, Python discovery, host Shiboken generator and binding order.
+[RUNTIME_BUILD.md](RUNTIME_BUILD.md) covers `.fwork` packaging, CFFI/libffi, selectolax/chompjs,
+curl-cffi, cryptography/OpenSSL and the FFmpeg extension.
+[SOURCE_BUILD_6.11.md](SOURCE_BUILD_6.11.md) retains the Android guide's historical chapter location
+while explicitly recording that no PySide6 6.11 iOS build is claimed.
 
-See the complete [Qt 6.12 source-build guide](SOURCE_BUILD_6.12.md). It covers:
+```bash
+# Supported baseline; the first source build can take a long time.
+TARGETS=ios_arm64 bash scripts/rebuild-ios-matrix.sh
 
-- building the exact same Qt 6.12.0 version for the Linux host and Android;
-- the extra host generators required by Quick3D, SCXML, RemoteObjects,
-  CanvasPainter, and Lottie;
-- the SDK 36 versus native API 35 split;
-- separate, versioned CPython caches for 3.10 through 3.14;
-- the corrected ARM compiler flags and 16 KiB page-alignment linker flags;
-- restoring 32-bit architecture support (`armv7a`, `i686`) dropped upstream;
-- known OpenSSL and optional CPython-module limitations.
+# Experimental iPhone 7 path; use a different work root from an iOS 18 build.
+WORK_ROOT="$PWD/work-ios15" IOS_DEPLOYMENT_TARGET=15.0 EXPERIMENTAL_IOS15=1 \
+    TARGETS=ios_arm64 bash scripts/rebuild-ios-matrix.sh
+```
 
-The [Android runtime helper](RUNTIME_BUILD.md) automates target builds of
-OpenSSL, libffi, bzip2, xz, SQLite, and CPython, with optional installation of
-Arch Linux host build packages. It can also invoke the companion fork to build
-the corresponding PySide6 wheels.
-
-Use `scripts/rebuild-android-matrix.sh` to build the full 5 x 4 Android matrix.
-The artifacts have not yet been run in an APK; device and emulator testing
-remains necessary.
-Historical Qt 6.11.2 wheels and Android Python runtimes are backed up in the
-[Qt 6.11.2 Android matrix prerelease](https://github.com/EchterAlsFake/PySide6-to-Android/releases/tag/android-matrix-snapshot-2026-09-30).
+Audits check formats, platforms and deployment targets; they do not execute the app. Three iOS
+targets are not Android's multi-Python, four-ABI matrix.
 
 ---
 
 ## Contributing
-Spotted inaccuracies or have improvements? Please open an issue or PR. Contributions for other distributions (besides
-Arch) are especially welcome.
+
+Open an issue/PR with your host architecture, Xcode/SDK, Qt/PySide, embedded Python ABI, wheel
+platform, deployment target and signing route. Say whether the device is jailbroken and report
+build, installation and runtime success separately. Stock-device and Apple Silicon results are welcome.
 
 ## Support
-If this guide helped you, a ⭐ on the repository is appreciated—it helps others discover it and keeps the project healthy.
+
+A ⭐ helps others discover the guide. Detailed, dated evidence is in
+[CURRENT_BUILD_NOTES.md](CURRENT_BUILD_NOTES.md).
 
 ## Donations
-Compiling your application is very easy since Qt 6.8, however, if I was able to
-save you some time with this guide, you can donate me money through:
+
+If this saved you time, you can support the work through:
 
 - [PayPal](https://paypal.me/EchterAlsFake)
 - [Ko-Fi](https://ko-fi.com/echteralsfake)

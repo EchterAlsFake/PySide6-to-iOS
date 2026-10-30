@@ -1,3 +1,14 @@
-/work/
+/work*/
 __pycache__/
 .idea/
+.venv/
+*.ipa
+*.whl
+*.so
+*.a
+*.o
+*.log
+.DS_Store
+.env
+credentials.toml
+**/deployment/

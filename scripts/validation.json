@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-30",
+  "android_guide_base_commit": "ec8b41c",
+  "qt_version": "6.12.0",
+  "embedded_python": "3.15.0rc2",
+  "host": "Intel macOS 15.7.2 / Xcode 26.3 / SDK 26.2",
+  "checks": {
+    "python_syntax": true,
+    "bash_3_2_syntax_and_entrypoint_help": true,
+    "documented_shell_syntax": true,
+    "markdown_local_paths_and_anchors": true,
+    "public_wheel_checksum_endpoints_all_three_targets": true,
+    "legacy_qt_patch_matches_reference_source": true,
+    "device_wheels": {
+      "target": "ios_arm64",
+      "wheels": [
+        {
+          "wheel": "pyside6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl",
+          "target_objects": 3569,
+          "minimum_ios": {
+            "15.0.0": 3569
+          },
+          "crc_and_target_audit_passed": true
+        },
+        {
+          "wheel": "shiboken6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl",
+          "target_objects": 4,
+          "minimum_ios": {
+            "15.0.0": 4
+          },
+          "crc_and_target_audit_passed": true
+        }
+      ],
+      "runtime_execution_tested_by_this_audit": false
+    },
+    "intel_simulator_wheels": {
+      "target": "ios_x86_64_simulator",
+      "wheels": [
+        {
+          "wheel": "pyside6-6.12.0-6.12.0-cp315-cp315-ios_x86_64_simulator.whl",
+          "target_objects": 8327,
+          "minimum_ios": {
+            "18.0.0": 8322,
+            "16.0.0": 5
+          },
+          "crc_and_target_audit_passed": true
+        },
+        {
+          "wheel": "shiboken6-6.12.0-6.12.0-cp315-cp315-ios_x86_64_simulator.whl",
+          "target_objects": 4,
+          "minimum_ios": {
+            "18.0.0": 4
+          },
+          "crc_and_target_audit_passed": true
+        }
+      ],
+      "runtime_execution_tested_by_this_audit": false
+    },
+    "runtime_slice_metadata": [
+      "ios_arm64",
+      "ios_arm64_simulator",
+      "ios_x86_64_simulator"
+    ],
+    "rejects_ios18_wheels_for_ios15_maximum": true,
+    "hello_xcode_generation": true,
+    "hello_intel_simulator_xcode_build": true,
+    "generic_ipa_helper": {
+      "architecture": "arm64",
+      "framework_count": 75,
+      "entitlements": {},
+      "nested_signature_verification_passed": true,
+      "zip_crc_verification_passed": true,
+      "native_extension_framework_markers_valid": true,
+      "stock_device_runtime_tested": false
+    }
+  },
+  "not_performed": [
+    "fresh complete Qt/PySide source rebuild through the generalized wrappers",
+    "Apple Silicon application build or runtime",
+    "new Hello World runtime/touch check",
+    "stock-device installation/runtime",
+    "generalized FFmpeg wrapper rebuild/runtime",
+    "background transfer and memory-pressure tests"
+  ]
+}
