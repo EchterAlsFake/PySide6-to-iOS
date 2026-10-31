@@ -1,9 +1,18 @@
-# PySide6 on iOS — Practical Guide
+# PySide6 on iOS 
+
+# Disclaimer
+This guide exists, because I wanted to port my Porn Fetch app to iOS. I have no idea about Apple's eccosystem and I do not own a real mac, nor a modern iPhone. I can not assist you if anything breaks. This guide is intended to help you, not to replace Qt's own guidance! 
 
 > [!CAUTION]
-> This guide uses AI-assisted maintenance. Phone milestones marked verified were checked by a human.
-> Newly adapted automation is identified separately in [current build notes](CURRENT_BUILD_NOTES.md).
-> A successful compile or IPA signature check is **not** a successful stock-iOS runtime test.
+> This guide is heavily AI assisted, but verified by a human (me lol) on real hardware.
+> I have successfully ported my Porn Fetch project to iOS. In this guide I have published the concrete steps on how I and GPT6-Astra got that working.
+
+# Setup
+- Arch Linux
+- Virtualized macOS from: https://github.com/notAperson535/OneClick-macOS-Simple-KVM
+- XCode 26.3 
+- iPhone 7 (Jailbroken) with Palera1n on iOS 15.8.8
+- iPhone 7 (not jailbroken) on iOS 15.8.8 too
 
 > [!NOTE]
 > This guide is **unofficial** and not affiliated with Qt. It mirrors the structure of
