@@ -1,0 +1,732 @@
+{
+  "qt": "6.12.0",
+  "minimum_ios": "15.0",
+  "qt_recompiled": false,
+  "qt_kit_release": "6.12.0-ios15-cp315",
+  "embedded_python_versions": {
+    "3.10": "3.10.20",
+    "3.11": "3.11.18",
+    "3.12": "3.12.16",
+    "3.13": "3.13.18",
+    "3.14": "3.14.10"
+  },
+  "host_python": "3.13",
+  "wheel_count": 30,
+  "app_links_passed": 15,
+  "native_simulator_interpreters_tested": 5,
+  "physical_devices_tested_for_this_matrix": false,
+  "simulator_visual_rendering_verified": false,
+  "source_patches": "scripts/versions.json",
+  "matrix": {
+    "3.10": {
+      "ios_arm64": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl": "2e61eafe4661a40d17c281a8ef8ac9685f8fb2b490a83e19c9ffbfcdbedf1dee",
+          "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl": "7b33a167ca4b9426ededfa13530a0a18a0b91c511d2ed3ab788450ad6ce2f5a6"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:10:11.792715+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl": "2e61eafe4661a40d17c281a8ef8ac9685f8fb2b490a83e19c9ffbfcdbedf1dee",
+            "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl": "7b33a167ca4b9426ededfa13530a0a18a0b91c511d2ed3ab788450ad6ce2f5a6"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "ipa": "/Users/asuna/PySide6-to-iOS/work-python310-314-ios15/ipas/PySideMatrix-Python310-ios15.ipa",
+          "ipa_sha256": "9063d8d431924f5933cb93d63ca8de1f548ee02a0fd30f573e19eacbb9dd37b7",
+          "finished": "2026-10-31T21:13:15.582259+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_arm64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl": "11fe6f95c2f8950f734d3dab9461a48a80ba9e2929a7e971d4c05998e09f0985",
+          "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl": "8224ba6ca6a8b722aab61ec682f4efa3e3012716ee4a81347f7fcc7635cccf46"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:13:20.416893+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl": "11fe6f95c2f8950f734d3dab9461a48a80ba9e2929a7e971d4c05998e09f0985",
+            "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl": "8224ba6ca6a8b722aab61ec682f4efa3e3012716ee4a81347f7fcc7635cccf46"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "finished": "2026-10-31T21:14:59.916768+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_arm64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_x86_64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl": "1dd1b79cb196f1bc171c2305fd08f5d8283a0cd5eaf58a29694bda530df08e92",
+          "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl": "35437b5d17d85231cfcf18606d426f9a8d8e229154767aebcf1c74a0fc757200"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:05:43.407255+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl": "1dd1b79cb196f1bc171c2305fd08f5d8283a0cd5eaf58a29694bda530df08e92",
+            "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl": "35437b5d17d85231cfcf18606d426f9a8d8e229154767aebcf1c74a0fc757200"
+          },
+          "runtime_tested": true,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "runtime_python": "3.10.20 (main, Jun 12 2026, 09:28:07) [Clang 17.0.0 (clang-1700.0.13.5)]",
+          "runtime_os": "26.3.1",
+          "runtime_binding_count": 52,
+          "finished": "2026-10-31T21:07:19.996361+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_x86_64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl",
+              "target_objects": 8126,
+              "minimum_ios": {
+                "15.0.0": 8126
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp310-cp310-ios_x86_64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      }
+    },
+    "3.11": {
+      "ios_arm64": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl": "b149b5ebc3582a8a2aeb86c25808fc92471a8b63f768bc3ab7df86fa1a5e5940",
+          "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl": "d5961e2b201d37406eed1ecd5a07ddbc273a202a82b5ea71e59ebab9f233bb95"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:19:28.719606+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl": "b149b5ebc3582a8a2aeb86c25808fc92471a8b63f768bc3ab7df86fa1a5e5940",
+            "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl": "d5961e2b201d37406eed1ecd5a07ddbc273a202a82b5ea71e59ebab9f233bb95"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "ipa": "/Users/asuna/PySide6-to-iOS/work-python310-314-ios15/ipas/PySideMatrix-Python311-ios15.ipa",
+          "ipa_sha256": "77410fd1ed40a16b0e56a6b0eca6ba050364e24e59a8e467638d33179663b95b",
+          "finished": "2026-10-31T21:23:30.509007+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_arm64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl": "aa20e5d84457bad02f3e803f4f9edec8b2cc2b2e26c26e5d66e09e715f0c68a4",
+          "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl": "a1bdb932ab0e5e1eec75233dd7e7a6f317677692bc9959efa1bfe036d54045ce"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:23:36.394910+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl": "aa20e5d84457bad02f3e803f4f9edec8b2cc2b2e26c26e5d66e09e715f0c68a4",
+            "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl": "a1bdb932ab0e5e1eec75233dd7e7a6f317677692bc9959efa1bfe036d54045ce"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "finished": "2026-10-31T21:25:17.834518+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_arm64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_x86_64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl": "1f7003ac0b32e6d9b78bbbb2d862f29aba8984f5d9af71092132c6dcc77c9cbb",
+          "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl": "8f6f03119c9ff34e3b37ce603d58750a6d0584e41ce73a033ccbbb468f0f1102"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:15:04.944641+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl": "1f7003ac0b32e6d9b78bbbb2d862f29aba8984f5d9af71092132c6dcc77c9cbb",
+            "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl": "8f6f03119c9ff34e3b37ce603d58750a6d0584e41ce73a033ccbbb468f0f1102"
+          },
+          "runtime_tested": true,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "runtime_python": "3.11.18 (main, Oct 26 2026, 06:13:53) [Clang 21.0.0 (clang-2100.1.1.101)]",
+          "runtime_os": "26.3.1",
+          "runtime_binding_count": 52,
+          "finished": "2026-10-31T21:19:11.313118+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_x86_64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl",
+              "target_objects": 8126,
+              "minimum_ios": {
+                "15.0.0": 8126
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp311-cp311-ios_x86_64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      }
+    },
+    "3.12": {
+      "ios_arm64": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl": "5b09e45738401c571f1ff9af3b238e373bab03808353e905244a4a5eb07ad9a5",
+          "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl": "cce3112e2cba26ba271d3044779d0a25954c450fd35270ebde5f4e6eac8b4501"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:29:49.034207+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl": "5b09e45738401c571f1ff9af3b238e373bab03808353e905244a4a5eb07ad9a5",
+            "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl": "cce3112e2cba26ba271d3044779d0a25954c450fd35270ebde5f4e6eac8b4501"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "ipa": "/Users/asuna/PySide6-to-iOS/work-python310-314-ios15/ipas/PySideMatrix-Python312-ios15.ipa",
+          "ipa_sha256": "dc7ab168e6db77ed876b0a7b6fda3d8896ab5f010aca1776ec91f261151d78c9",
+          "finished": "2026-10-31T21:33:00.265876+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_arm64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl": "6b09b5ab130ff18ef9ccab3f0237b17b5038bc6f2701653ec5ef256edb848492",
+          "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl": "31cb6e69b9caa6f6ccd7dcabc01e409d55e6de5c1825de0539ae3eb510c13d94"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:33:04.923542+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl": "6b09b5ab130ff18ef9ccab3f0237b17b5038bc6f2701653ec5ef256edb848492",
+            "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl": "31cb6e69b9caa6f6ccd7dcabc01e409d55e6de5c1825de0539ae3eb510c13d94"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "finished": "2026-10-31T21:34:30.849921+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_arm64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_x86_64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl": "bf79ef5aae3ff7181908c30c45af52a91e1faa39da82011d795de56e27b7b83a",
+          "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl": "6d2ca03d883db35df43a9a908cf446f546eca63c9e28713e0312c10da23dd052"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:25:23.647360+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl": "bf79ef5aae3ff7181908c30c45af52a91e1faa39da82011d795de56e27b7b83a",
+            "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl": "6d2ca03d883db35df43a9a908cf446f546eca63c9e28713e0312c10da23dd052"
+          },
+          "runtime_tested": true,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "runtime_python": "3.12.16 (main, Oct 26 2026, 06:21:51) [Clang 21.0.0 (clang-2100.1.1.101)]",
+          "runtime_os": "26.3.1",
+          "runtime_binding_count": 52,
+          "finished": "2026-10-31T21:29:36.793425+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_x86_64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl",
+              "target_objects": 8126,
+              "minimum_ios": {
+                "15.0.0": 8126
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp312-cp312-ios_x86_64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      }
+    },
+    "3.13": {
+      "ios_arm64": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl": "ab08ca099c72b808f0e5b7e6447bc97e9fc43109de83bb22601849231359a499",
+          "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl": "451127b21feedd643affb1f895e5c9a4b06af986845111b24c9ece8cebab8c53"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:34:35.297588+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl": "ab08ca099c72b808f0e5b7e6447bc97e9fc43109de83bb22601849231359a499",
+            "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl": "451127b21feedd643affb1f895e5c9a4b06af986845111b24c9ece8cebab8c53"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "ipa": "/Users/asuna/PySide6-to-iOS/work-python310-314-ios15/ipas/PySideMatrix-Python313-ios15.ipa",
+          "ipa_sha256": "29ea6ad38d6f9aead08b39edf51af60a0e326e6f9d879f34994616de20e2269b",
+          "finished": "2026-10-31T21:38:05.482646+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_arm64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl": "9b2970472451de482be26c932e9a03f340d986e27e50cc98c8abb0b70cab1e57",
+          "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl": "91f2d97f3b51b5dec04cbe3878aba793289b48e6d7b13c0b75ad7b976847d952"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:41:41.102720+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl": "9b2970472451de482be26c932e9a03f340d986e27e50cc98c8abb0b70cab1e57",
+            "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl": "91f2d97f3b51b5dec04cbe3878aba793289b48e6d7b13c0b75ad7b976847d952"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "finished": "2026-10-31T21:43:05.924600+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_arm64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_x86_64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "pyside6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl": "fc0aebc30ce81b7b62ccc4d8e98d451cfc8fba6ed44d2c0ae5b692452c93840f",
+          "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl": "607d5682d0efa304d6692aec22027ff0c4c2e102992c709753e8bf24d0099868"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:38:16.990614+00:00",
+          "wheel_sha256": {
+            "pyside6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl": "fc0aebc30ce81b7b62ccc4d8e98d451cfc8fba6ed44d2c0ae5b692452c93840f",
+            "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl": "607d5682d0efa304d6692aec22027ff0c4c2e102992c709753e8bf24d0099868"
+          },
+          "runtime_tested": true,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "runtime_python": "3.13.18 (main, Oct 26 2026, 06:26:26) [Clang 21.0.0 (clang-2100.1.1.101)]",
+          "runtime_os": "26.3.1",
+          "runtime_binding_count": 52,
+          "finished": "2026-10-31T21:41:36.379267+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_x86_64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl",
+              "target_objects": 8126,
+              "minimum_ios": {
+                "15.0.0": 8126
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp313-cp313-ios_x86_64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      }
+    },
+    "3.14": {
+      "ios_arm64": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl": "84aab1a1fb5d6fbe3fcd2ddf090fc3c5ca31f399ae2f8d7673ac36ee25d71436",
+          "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl": "04ed4d38c369a9aa4a1bdc5bbe5539176125c76e5acef3513b37d54e5c965404"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:43:11.046599+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl": "84aab1a1fb5d6fbe3fcd2ddf090fc3c5ca31f399ae2f8d7673ac36ee25d71436",
+            "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl": "04ed4d38c369a9aa4a1bdc5bbe5539176125c76e5acef3513b37d54e5c965404"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "ipa": "/Users/asuna/PySide6-to-iOS/work-python310-314-ios15/ipas/PySideMatrix-Python314-ios15.ipa",
+          "ipa_sha256": "7c452e2e62664aebeb9cd5d2c1d9687615a7610dd290ae07b7b0886ef233857c",
+          "finished": "2026-10-31T21:46:41.514491+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_arm64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl": "508b89320247c91a638024434574c34e5db63945df11accc3d5ce6921abb983e",
+          "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl": "79f1c1010ba917131c2eab603ac54145556ab1af11ddc0ee2f949e2352fdac70"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:46:53.134919+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl": "508b89320247c91a638024434574c34e5db63945df11accc3d5ce6921abb983e",
+            "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl": "79f1c1010ba917131c2eab603ac54145556ab1af11ddc0ee2f949e2352fdac70"
+          },
+          "runtime_tested": false,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "finished": "2026-10-31T21:48:57.097208+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_arm64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl",
+              "target_objects": 8127,
+              "minimum_ios": {
+                "15.0.0": 8127
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_arm64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      },
+      "ios_x86_64_simulator": {
+        "build_status": "passed",
+        "wheel_sha256": {
+          "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl": "3b2c27b4e61f2ec495a1da5afec7f9ed1e647a55c8947038a16986bfd9a3e5f2",
+          "pyside6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl": "ed4715caa60629c4dca9f2c337912b6b6e267102030ee3c999da78c725947d62"
+        },
+        "binding_count": 52,
+        "qml_module_count": 105,
+        "translations": 314,
+        "application_check": {
+          "started": "2026-10-31T21:50:46.850577+00:00",
+          "wheel_sha256": {
+            "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl": "3b2c27b4e61f2ec495a1da5afec7f9ed1e647a55c8947038a16986bfd9a3e5f2",
+            "pyside6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl": "ed4715caa60629c4dca9f2c337912b6b6e267102030ee3c999da78c725947d62"
+          },
+          "runtime_tested": true,
+          "visual_rendering_verified": false,
+          "module_features_exercised": false,
+          "generation_exit": 0,
+          "xcodebuild_exit": 0,
+          "runtime_python": "3.14.10 (main, Oct 26 2026, 06:41:26) [Clang 21.0.0 (clang-2100.1.1.101)]",
+          "runtime_os": "26.3.1",
+          "runtime_binding_count": 52,
+          "finished": "2026-10-31T21:52:50.508006+00:00"
+        },
+        "wheel_audit": {
+          "target": "ios_x86_64_simulator",
+          "wheels": [
+            {
+              "wheel": "pyside6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl",
+              "target_objects": 8126,
+              "minimum_ios": {
+                "15.0.0": 8126
+              },
+              "crc_and_target_audit_passed": true
+            },
+            {
+              "wheel": "shiboken6-6.12.0-6.12.0-cp314-cp314-ios_x86_64_simulator.whl",
+              "target_objects": 4,
+              "minimum_ios": {
+                "15.0.0": 4
+              },
+              "crc_and_target_audit_passed": true
+            }
+          ],
+          "runtime_execution_tested_by_this_audit": false
+        }
+      }
+    }
+  }
+}

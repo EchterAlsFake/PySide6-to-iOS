@@ -95,6 +95,10 @@ Keep target Qt prefixes, unpacked wheel caches and build directories separate.
 
 ## Get Prebuilt iOS Wheels
 
+The expanded [Python 3.10–3.14 matrix](PYTHON_MATRIX.md) has its own
+[release](https://github.com/EchterAlsFake/PySide6-to-iOS/releases/tag/6.12.0-ios15-cp310-cp314),
+with 30 wheels, matching Python runtimes and five re-signable test IPAs.
+
 For the experimental **iOS 15** matrix, use the
 [6.12.0 iOS 15 release](https://github.com/EchterAlsFake/PySide6-to-iOS/releases/tag/6.12.0-ios15-cp315).
 It supplies matching wheel pairs and static Qt SDKs for devices and both

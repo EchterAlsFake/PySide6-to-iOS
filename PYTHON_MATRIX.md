@@ -26,6 +26,37 @@ There are **15 combinations and 30 wheels**. iOS wheels use explicit tags
 such as `cp310-cp310-ios_arm64`; they are static deployment inputs, not a
 single desktop `cp310-abi3` wheel renamed for multiple Python versions.
 
+## Release and completed checks
+
+[Download the Python 3.10–3.14 release](https://github.com/EchterAlsFake/PySide6-to-iOS/releases/tag/6.12.0-ios15-cp310-cp314).
+All 30 wheels passed their tag, archive and native-code audits. All 15
+full-module applications linked, and all five Python versions imported all
+52 bindings plus the two PySide helpers on the Intel iOS 26.3.1 simulator.
+The five device IPAs are prepared for re-signing and manual testing. No
+physical-device runtime result is claimed for these five Python versions.
+Apple Silicon simulator execution and visual simulator rendering remain
+unverified. See [the machine-readable results](scripts/python-matrix-validation.json).
+
+From this repository, for example:
+
+```bash
+export TARGET=ios_arm64
+export DOWNLOAD_DIR="$PWD/work-downloads/python310/$TARGET"
+mkdir -p "$DOWNLOAD_DIR"
+gh release download 6.12.0-ios15-cp310-cp314 --repo EchterAlsFake/PySide6-to-iOS \
+    --dir "$DOWNLOAD_DIR" --pattern "*-cp310-cp310-$TARGET.whl" \
+    --pattern 'Python-3.10-iOS-support.*.tar.gz' \
+    --pattern SHA256SUMS --pattern SHA256SUMS.asc
+python3.13 scripts/verify-release-assets.py "$DOWNLOAD_DIR" --target "$TARGET" --python-version 3.10
+python3.13 scripts/check-ios-wheels.py "$DOWNLOAD_DIR" --target "$TARGET" --python-version 3.10 --max-ios 15.0
+```
+
+Verify `SHA256SUMS.asc` with GPG as described in the main guide. Extract the
+matching Python runtime and pass its `Python.xcframework` explicitly to
+`pyside6-ios-deploy`. The release includes the pinned PySide source and the
+guide's build/patch sources. The unchanged Qt kits and corresponding Qt/PDF
+source archives remain in the [original release](https://github.com/EchterAlsFake/PySide6-to-iOS/releases/tag/6.12.0-ios15-cp315).
+
 ## Build without rebuilding Qt
 
 Use an Intel macOS host, full Xcode, Python 3.13, CMake, Ninja, zstd, Git and

@@ -14,6 +14,8 @@ def main():
     parser.add_argument("directory", type=Path)
     parser.add_argument("--all", action="store_true", dest="require_all")
     parser.add_argument("--target", choices=["ios_arm64", "ios_arm64_simulator", "ios_x86_64_simulator"])
+    parser.add_argument("--python-version", choices=["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"],
+                        help="Select a wheel pair in a multi-version release")
     args = parser.parse_args()
     directory = args.directory.resolve()
     entries = {}
@@ -29,9 +31,13 @@ def main():
         entries[name] = digest
     required = set(entries) if args.require_all else set()
     if args.target:
+        suffix = "-" + args.target + ".whl"
+        if args.python_version:
+            tag = "cp" + args.python_version.replace(".", "")
+            suffix = f"-{tag}-{tag}-{args.target}.whl"
         for package in ["pyside6", "shiboken6"]:
             matches = [name for name in entries if name.startswith(package + "-")
-                       and name.endswith("-" + args.target + ".whl")]
+                       and name.endswith(suffix)]
             if len(matches) != 1:
                 raise SystemExit(f"Expected one {package} wheel for {args.target} in SHA256SUMS")
             required.update(matches)
