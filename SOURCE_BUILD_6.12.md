@@ -1,5 +1,9 @@
 # Source-build Qt 6.12 and PySide6 iOS wheels
 
+For the full supported module set on device ARM64 and both simulator CPUs,
+see [RELEASE_MATRIX.md](RELEASE_MATRIX.md). This chapter retains the initial
+minimal Quick build for reference.
+
 This chapter mirrors the Android source-build guide, using the actual iOS
 reference: Qt/PySide 6.12.0, embedded CPython 3.15.0rc2 and an Intel macOS host.
 It has two paths: upstream iOS 18+ and the experimental iOS 15 patch used for

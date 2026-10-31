@@ -1,0 +1,21 @@
+--- a/deploy_lib/ios/pbxproj.py
++++ b/deploy_lib/ios/pbxproj.py
+@@ -265,6 +265,18 @@
+         _add_framework(
+             "libpyside6qml.a", str(cfg.pyside6_dir / "libpyside6qml.a"), "archive.ar"
+         )
++
++    # Static bindings keep their PySide-only support libraries as separate archives.
++    for module, library in [
++        ("QtRemoteObjects", "libpyside6remoteobjects.a"),
++        ("QtUiTools", "libuiplugin.a"),
++    ]:
++        if module in qt_deps.frameworks:
++            archive = cfg.pyside6_dir / library
++            if not archive.is_file():
++                raise RuntimeError(f"{module} requires the static support archive {archive}. "
++                                   "Use a wheel that includes this archive.")
++            _add_framework(library, str(archive), "archive.ar")
+ 
+     # -- Info.plist file reference (not in a build phase)
+     info_ref = ids.next()

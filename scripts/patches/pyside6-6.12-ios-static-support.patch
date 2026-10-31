@@ -1,0 +1,45 @@
+--- a/sources/pyside6/plugins/uitools/CMakeLists.txt
++++ b/sources/pyside6/plugins/uitools/CMakeLists.txt
+@@ -27,6 +27,10 @@
+                       Qt::UiPlugin
+                       Qt::Widgets
+                       Shiboken6::libshiboken)
++if(IOS)
++    # Static QtUiTools bindings retain references to this plugin at application link time.
++    install(TARGETS uiplugin ARCHIVE DESTINATION PySide6)
++endif()
+ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+     set(LIBRARY_OUTPUT_SUFFIX ${CMAKE_DEBUG_POSTFIX})
+ else()
+--- a/build_scripts/platforms/unix.py
++++ b/build_scripts/platforms/unix.py
+@@ -242,7 +242,7 @@
+             # Copy the per-module static libraries
+             copydir(
+                 "{install_dir}/{cmake_package_name}", destination_dir,
+-                _filter=["libQt*.a"],
++                _filter=["libQt*.a", "libuiplugin.a"],
+                 recursive=False, _vars=_vars)
+ 
+     # Some libraries specific to Linux/Android from 6.8
+--- a/sources/pyside-tools/deploy_lib/ios/pbxproj.py
++++ b/sources/pyside-tools/deploy_lib/ios/pbxproj.py
+@@ -265,6 +265,18 @@
+         _add_framework(
+             "libpyside6qml.a", str(cfg.pyside6_dir / "libpyside6qml.a"), "archive.ar"
+         )
++
++    # Static bindings keep their PySide-only support libraries as separate archives.
++    for module, library in [
++        ("QtRemoteObjects", "libpyside6remoteobjects.a"),
++        ("QtUiTools", "libuiplugin.a"),
++    ]:
++        if module in qt_deps.frameworks:
++            archive = cfg.pyside6_dir / library
++            if not archive.is_file():
++                raise RuntimeError(f"{module} requires the static support archive {archive}. "
++                                   "Use a wheel that includes this archive.")
++            _add_framework(library, str(archive), "archive.ar")
+ 
+     # -- Info.plist file reference (not in a build phase)
+     info_ref = ids.next()

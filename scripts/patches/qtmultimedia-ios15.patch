@@ -1,0 +1,37 @@
+--- a/src/multimedia/coreaudio/qcoreaudiodevices.mm
++++ b/src/multimedia/coreaudio/qcoreaudiodevices.mm
+@@ -109,9 +109,22 @@
+                 [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
+ 
+         // TODO: Support Bluetooth and USB devices
++        AVCaptureDeviceType microphoneType;
++#if defined(Q_OS_IOS)
++        if (@available(iOS 17.0, macCatalyst 17.0, *)) {
++            microphoneType = AVCaptureDeviceTypeMicrophone;
++        } else {
++            QT_WARNING_PUSH
++            QT_WARNING_DISABLE_DEPRECATED
++            microphoneType = AVCaptureDeviceTypeBuiltInMicrophone;
++            QT_WARNING_POP
++        }
++#else
++        microphoneType = AVCaptureDeviceTypeMicrophone;
++#endif
+         AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession =
+             [AVCaptureDeviceDiscoverySession
+-                discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeMicrophone ]
++                discoverySessionWithDeviceTypes:@[ microphoneType ]
+                                       mediaType:AVMediaTypeAudio
+                                        position:AVCaptureDevicePositionUnspecified];
+ 
+--- a/src/multimedia/darwin/qavfvideodevices.mm
++++ b/src/multimedia/darwin/qavfvideodevices.mm
+@@ -62,7 +62,7 @@
+ #endif
+     ];
+ 
+-    if (@available(macOS 14, *)) {
++    if (@available(macOS 14.0, iOS 17.0, macCatalyst 17.0, *)) {
+         discoveryDevices = [discoveryDevices arrayByAddingObjectsFromArray: @[
+             AVCaptureDeviceTypeExternal,
+             AVCaptureDeviceTypeContinuityCamera

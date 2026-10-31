@@ -84,7 +84,7 @@ def version(value):
     return f"{value >> 16}.{(value >> 8) & 255}.{value & 255}"
 
 
-def runtime(path, target):
+def runtime(path, target, maximum=None):
     metadata = plistlib.loads((path / "Info.plist").read_bytes())
     cpu, platform = TARGETS[target]
     arch = "arm64" if cpu == 0x0100000C else "x86_64"
@@ -99,9 +99,18 @@ def runtime(path, target):
         raise ValueError("Runtime Python.h missing")
     if not (path / "lib/python3.15/encodings/__init__.py").is_file():
         raise ValueError("Common Python 3.15 standard library missing")
-    records = validate(list(native_records((framework / "Python").read_bytes(), "Python.framework/Python")), target)
+    records = validate(list(native_records((framework / "Python").read_bytes(), "Python.framework/Python")), target, maximum)
+    extensions = path / entry["LibraryIdentifier"] / f"lib-{arch}/python3.15/lib-dynload"
+    extension_files = sorted(extensions.glob("*.so"))
+    if not extension_files:
+        raise ValueError(f"Pinned runtime native extensions missing: {extensions}")
+    extension_minimums = Counter()
+    for extension in extension_files:
+        selected = validate(list(native_records(extension.read_bytes(), extension.name)), target, maximum)
+        extension_minimums.update(version(r["minimum"]) for r in selected)
     return {"runtime": str(path), "target": target, "slice": entry["LibraryIdentifier"],
             "minimum_ios": [version(r["minimum"]) for r in records], "audit_passed": True,
+            "native_extension_count": len(extension_files), "native_extension_minimums": dict(extension_minimums),
             "runtime_execution_tested_by_this_audit": False}
 
 
@@ -110,5 +119,11 @@ if __name__ == "__main__":
     parser.add_argument("kind", choices=["runtime"])
     parser.add_argument("path", type=Path)
     parser.add_argument("--target", choices=TARGETS, required=True)
+    parser.add_argument("--max-ios", help="Reject runtime/native extensions requiring a newer iOS version")
     args = parser.parse_args()
-    print(json.dumps(runtime(args.path, args.target), indent=2))
+    maximum = None
+    if args.max_ios:
+        parts = [int(x) for x in args.max_ios.split(".")]
+        parts += [0] * (3 - len(parts))
+        maximum = (parts[0] << 16) | (parts[1] << 8) | parts[2]
+    print(json.dumps(runtime(args.path, args.target, maximum), indent=2))

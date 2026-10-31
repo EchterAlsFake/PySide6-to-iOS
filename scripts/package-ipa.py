@@ -20,6 +20,8 @@ parser.add_argument("--app", type=Path, required=True)
 parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--bundle-id", help="Optional distinct test identifier")
 parser.add_argument("--display-name", help="Optional distinct test display name")
+parser.add_argument("--share-documents", action="store_true",
+                    help="Expose the app's Documents folder in Files for test reports")
 args = parser.parse_args()
 source = args.app.resolve()
 output = args.output.resolve()
@@ -51,12 +53,18 @@ if args.bundle_id:
     info["CFBundleIdentifier"] = args.bundle_id
 if args.display_name:
     info["CFBundleDisplayName"] = args.display_name
-info.setdefault("UIApplicationSceneManifest", {
-    "UIApplicationSupportsMultipleScenes": False,
-    "UISceneConfigurations": {"UIWindowSceneSessionRoleApplication": [{
-        "UISceneConfigurationName": "Default Configuration",
-        "UISceneDelegateClassName": "QIOSWindowSceneDelegate"}]}})
+scene = info.setdefault("UIApplicationSceneManifest", {})
+scene.setdefault("UIApplicationSupportsMultipleScenes", False)
+configurations = scene.setdefault("UISceneConfigurations", {})
+application_scenes = configurations.setdefault("UIWindowSceneSessionRoleApplication", [
+    {"UISceneConfigurationName": "Default Configuration"}])
+for configuration in application_scenes:
+    # The generated plist may already have a manifest but omit Qt's delegate.
+    configuration.setdefault("UISceneDelegateClassName", "QIOSWindowSceneDelegate")
 info.setdefault("UILaunchScreen", {})
+if args.share_documents:
+    info["UIFileSharingEnabled"] = True
+    info["LSSupportsOpeningDocumentsInPlace"] = True
 (app / "Info.plist").write_bytes(plistlib.dumps(info))
 empty = staging / "empty.entitlements.plist"
 empty.write_bytes(plistlib.dumps({}))

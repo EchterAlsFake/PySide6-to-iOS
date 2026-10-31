@@ -176,6 +176,34 @@ Guide-specific checks on 30 October:
 
 Machine-readable results: [`scripts/validation.json`](scripts/validation.json).
 
+## 31 October — full matrix and stock-device test
+
+The fresh full-module Qt/PySide 6.12.0 device kit and ARM64 simulator kit
+have completed their builds and binary audits. Each contains 52 supported
+Qt bindings, the QtQmlFeatures/QtAsyncio helpers, 105 QML modules and 314
+translation catalogs. All-module applications link for both ARM64 targets.
+The Intel simulator build is still in progress; the complete release is
+not published yet.
+
+The fresh device test app was packaged as `PySideMatrixSmoke-ios15.ipa`
+for re-signing, with minimum iOS 15, 69 embedded frameworks and empty ad-hoc
+entitlements. Its input SHA-256 is
+`5e90a1ed23ffd4177327aa2baa1b376db7407e569e7eaabe106dcfdb6369cfa2`.
+The user installed it on the non-jailbroken iPhone 7 running iOS 15.8.8
+and confirmed all module imports and the working tap counter. This is a
+stock-device Python/Qt import, window and touch test; it does not exercise
+every module's hardware, media or networking features. It also does not
+establish a stock-device result for the separate PornFetch application IPA.
+
+The source and deployment patches now include UiTools' `libuiplugin.a`
+and link it and `libpyside6remoteobjects.a` when their modules are used.
+The generic IPA helper fills in Qt's missing scene delegate even when the
+generated plist already has a scene manifest. Document sharing can be
+enabled to retrieve the smoke application's JSON report and log.
+
+See [the full matrix workflow](RELEASE_MATRIX.md) for sources, exclusions,
+patches and verification details.
+
 ## Artifacts and provenance
 
 The [public application lab source snapshot](https://github.com/EchterAlsFake/Porn_Fetch/tree/ios/iphone7-port-snapshot-2026-10-28/ios-lab)

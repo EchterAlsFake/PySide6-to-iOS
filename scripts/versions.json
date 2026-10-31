@@ -20,5 +20,42 @@
     "shiboken6-6.12.0-6.12.0-cp315-cp315-ios_arm64.whl": "ded7491b5fcb3d06b71135b2e9a8d7ebfffb94c7ae0684dc811e6c0d333e513d"
   },
   "ffmpeg_version": "9.0.2",
-  "ffmpeg_source_sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
+  "ffmpeg_source_sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+  "full_matrix_sources": {
+    "qt": {
+      "url": "https://download.qt.io/official_releases/qt/6.12/6.12.0/single/qt-everywhere-src-6.12.0.tar.xz",
+      "sha256": "98ff4f44bac6ec3e1e62ee2a4316ae0e3d15badb015d753cc0268a20db52f165",
+      "directory": "qt-everywhere-src-6.12.0",
+      "enclosing_directory": true
+    },
+    "qt_pdf": {
+      "url": "https://download.qt.io/online/qtsdkrepository/all_os/extensions/qtwebengine/6120/61400/src_doc_examples/extensions.qtwebengine.6120.61400.src/6.12.0-0-202609281005qtwebengine-everywhere-src-6.140.0.tar.xz",
+      "sha256": "141e9b230e5ec9ee65a7357ca4b87d702e4badc515289eeade1047a788bb96e7",
+      "directory": "qtwebengine-everywhere-src-6.140.0",
+      "enclosing_directory": false
+    }
+  },
+  "ios15_module_patches": {
+    "qtmultimedia": {
+      "file": "qtmultimedia-ios15.patch",
+      "sha256": "5e8444c2bfe73cc6f579ec9647c722d8323e581aa7cad96a86da6239d3692e1f",
+      "source_revision": "6ca885f084a3984749d53bb50a0e08bdc60e86cc"
+    },
+    "qtwebengine-pdf": {
+      "file": "qtpdf-6.140-build.patch",
+      "sha256": "e6541951435f65b29f7b626783470cea3e4a4354f3cc852bedebd7176e2f4598",
+      "source_revision": "d505fc23640d2bd6345e6483eb73daf4e19f5829"
+    }
+  },
+  "pyside_patches": [
+    {
+      "file": "pyside6-6.12-ios-static-support.patch",
+      "sha256": "1022459c702fa9ba589e08932c06c59220a4879f313840c1270daa62b755ed21",
+      "source_revision": "f50facb83fc3dc5f3240c854668c7a6dd93871b2"
+    }
+  ],
+  "ios_deploy_patch": {
+    "file": "pyside6-6.12-ios-deploy-support.patch",
+    "sha256": "5c861b5b5f03070f71f5eb9a08f20e82b4d052ddf09414d298a28c7e78a39733"
+  }
 }

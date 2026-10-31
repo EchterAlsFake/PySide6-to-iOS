@@ -39,9 +39,14 @@ Changing it requires matching wheels and native extensions.
 CFFI callbacks; chompjs; selectolax; curl-cffi sync/async HTTPS; cryptography; a real application's
 download → in-process FFmpeg remux → video/audio playback workflow on the jailbroken iPhone 7.
 
-**Prepared, not runtime-verified:** a stock-iOS IPA for iLoader/SideStore. Its layout, nested
+**Prepared, not runtime-verified:** the PornFetch stock-iOS IPA for iLoader/SideStore. Its layout, nested
 signatures and archive integrity pass checks. Stock installation, rendering and downloads still
 need testing. Apple Silicon simulator and clean rebuilds of all generalized helpers are not claimed verified.
+
+**31 October update:** the fresh full-matrix test IPA imports all **52 bindings**
+and has a working tap counter on the **non-jailbroken iPhone 7 / iOS 15.8.8**,
+as confirmed by the user. That result applies to the matrix test app; the
+separate PornFetch stock-iOS IPA still needs its own runtime test.
 
 ---
 
@@ -80,6 +85,35 @@ Keep target Qt prefixes, unpacked wheel caches and build directories separate.
 ---
 
 ## Get Prebuilt iOS Wheels
+
+For the experimental **iOS 15** matrix, use the
+[6.12.0 iOS 15 release](https://github.com/EchterAlsFake/PySide6-to-iOS/releases/tag/6.12.0-ios15-cp315).
+It supplies matching wheel pairs and static Qt SDKs for devices and both
+simulator CPUs, plus the Intel host kit, Python runtime, corresponding source,
+patches and build evidence. See [the full matrix guide](RELEASE_MATRIX.md)
+for module scope and the deployment-tool patch, and
+[the release results](MATRIX_RELEASE_RESULTS.md) for per-target validation.
+
+From this repository, download just your wheel pair and verification files:
+
+```bash
+export GUIDE_ROOT="$PWD"
+export WORK_ROOT="$GUIDE_ROOT/work"
+export TARGET=ios_x86_64_simulator
+mkdir -p "$WORK_ROOT/wheels/$TARGET"
+gh release download 6.12.0-ios15-cp315 --repo EchterAlsFake/PySide6-to-iOS \
+    --dir "$WORK_ROOT/wheels/$TARGET" \
+    --pattern "*-$TARGET.whl" --pattern SHA256SUMS --pattern SHA256SUMS.asc
+python3.13 scripts/verify-release-assets.py "$WORK_ROOT/wheels/$TARGET" --target "$TARGET"
+python3.13 scripts/check-ios-wheels.py "$WORK_ROOT/wheels/$TARGET" --target "$TARGET" --max-ios 15.0
+```
+
+The checksum file is GPG-signed with fingerprint
+`7082BBFF855D47C6BB13C3BF6AC58B8CA26D1C5F`. With that public key in your
+keyring, run `gpg --verify SHA256SUMS.asc SHA256SUMS` in the download directory.
+Checksums alone verify file integrity; verify the signature to check its signer.
+
+### Official upstream wheels
 
 Get matching **iOS** PySide6/shiboken6 wheels. Desktop wheels installed with `pip` supply host tools.
 Do not install target wheels into the host environment.
@@ -121,8 +155,9 @@ The upstream `qtpip download PySide6 --ios --arch arm64 --platform device` route
 Here, qtpip 0.2.0 requested commercial credentials and direct public files worked. That observation
 does not establish access to every Qt package or future download.
 
-Prebuilt wheels keep Qt's newer iOS baseline. For iPhone 7/iOS 15, follow the
-[custom source-build path](SOURCE_BUILD_6.12.md#experimental-ios-15-path), not a plist edit alone.
+Official upstream wheels keep Qt's newer iOS baseline. For iPhone 7/iOS 15,
+use this repository's experimental release or the
+[custom source-build path](SOURCE_BUILD_6.12.md#experimental-ios-15-path).
 
 ---
 
@@ -133,7 +168,7 @@ Prebuilt wheels keep Qt's newer iOS baseline. For iPhone 7/iOS 15, follow the
 Install full Xcode and open it once to finish initial setup. With Homebrew already available:
 
 ```bash
-brew install cmake ninja git python@3.13 pkgconf autoconf automake libtool
+brew install cmake ninja git python@3.13 pkgconf autoconf automake libtool gh gnupg zstd
 ```
 
 Select Xcode **for this terminal**, without changing the whole machine:
@@ -340,6 +375,10 @@ The final touch counter was read back from the phone, not inferred from compilat
 ---
 
 ## Building Qt and the Wheels Yourself
+
+For all three iOS 15 targets and the full supported Qt-for-Python module set,
+use the separate [full release matrix workflow](RELEASE_MATRIX.md). The older
+helpers below build the minimal Quick stack used during the initial port.
 
 See [SOURCE_BUILD_6.12.md](SOURCE_BUILD_6.12.md): matching host tools, static device Qt, iOS 15
 compatibility changes, Python discovery, host Shiboken generator and binding order.
