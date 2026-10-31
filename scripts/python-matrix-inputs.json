@@ -1,0 +1,76 @@
+{
+  "python": {
+    "3.10": {
+      "tag": "3.10-b14",
+      "name": "Python-3.10-iOS-support.b14.tar.gz",
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.10-b14/Python-3.10-iOS-support.b14.tar.gz",
+      "sha256": "a6da479a67be74569813af77179dc8ac83a5e685324408110bfc04632166e404",
+      "bytes": 29134833,
+      "python_release": "3.10.20"
+    },
+    "3.11": {
+      "tag": "3.11-b13",
+      "name": "Python-3.11-iOS-support.b13.tar.gz",
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.11-b13/Python-3.11-iOS-support.b13.tar.gz",
+      "sha256": "e1f55eef2b8c4812f63ee02f8284c8db067ef1a26e75b9a470934376ac197ea0",
+      "bytes": 30701503,
+      "python_release": "3.11.18"
+    },
+    "3.12": {
+      "tag": "3.12-b13",
+      "name": "Python-3.12-iOS-support.b13.tar.gz",
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.12-b13/Python-3.12-iOS-support.b13.tar.gz",
+      "sha256": "4eea2c76ad70f2df8c1767489315a16d72cd96ce5c086412ee2d154c3bd8e257",
+      "bytes": 32193359,
+      "python_release": "3.12.16"
+    },
+    "3.13": {
+      "tag": "3.13-b18",
+      "name": "Python-3.13-iOS-support.b18.tar.gz",
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.13-b18/Python-3.13-iOS-support.b18.tar.gz",
+      "sha256": "d06acf2a9c7964a8689566353a0e707402eff822037de5e29ba0e16040f7047d",
+      "bytes": 34524958,
+      "python_release": "3.13.18"
+    },
+    "3.14": {
+      "tag": "3.14-b14",
+      "name": "Python-3.14-iOS-support.b14.tar.gz",
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b14/Python-3.14-iOS-support.b14.tar.gz",
+      "sha256": "703ff822529f46edcbcd8b88096b2544f6990f3109ad38b4b4b61bb489a7c1ee",
+      "bytes": 37299470,
+      "python_release": "3.14.10"
+    }
+  },
+  "qt_assets": [
+    {
+      "name": "pyside-setup-v6.12.0.tar.gz",
+      "size": 21199333,
+      "digest": "sha256:f4ae4bd3bd010fad907f221ba9e3107ae4611f4cae07c7b0ea5739e6813b18f4",
+      "url": "https://github.com/EchterAlsFake/PySide6-to-iOS/releases/download/6.12.0-ios15-cp315/pyside-setup-v6.12.0.tar.gz"
+    },
+    {
+      "name": "qt-host-6.12.0-macos-x86_64.tar.zst",
+      "size": 65403154,
+      "digest": "sha256:879db0a0225a69568d8ed26ac8e72377576062587537ad50e4d0188119778be3",
+      "url": "https://github.com/EchterAlsFake/PySide6-to-iOS/releases/download/6.12.0-ios15-cp315/qt-host-6.12.0-macos-x86_64.tar.zst"
+    },
+    {
+      "name": "qt-sdk-6.12.0-ios15-ios_arm64.tar.zst",
+      "size": 88570116,
+      "digest": "sha256:e9b04111d652cd773ca66316f1707f4ebe97aa83cf6886258c2724a929aef750",
+      "url": "https://github.com/EchterAlsFake/PySide6-to-iOS/releases/download/6.12.0-ios15-cp315/qt-sdk-6.12.0-ios15-ios_arm64.tar.zst"
+    },
+    {
+      "name": "qt-sdk-6.12.0-ios15-ios_arm64_simulator.tar.zst",
+      "size": 88820134,
+      "digest": "sha256:e233f3f61ce2a474ef4d2cad9f0fc91960074a64f930441e2d4b1f6708168a28",
+      "url": "https://github.com/EchterAlsFake/PySide6-to-iOS/releases/download/6.12.0-ios15-cp315/qt-sdk-6.12.0-ios15-ios_arm64_simulator.tar.zst"
+    },
+    {
+      "name": "qt-sdk-6.12.0-ios15-ios_x86_64_simulator.tar.zst",
+      "size": 86008737,
+      "digest": "sha256:d9eb3a970a242057d052d3df9ed90742d383cac39c26e4b2a540a32b4a0f3de6",
+      "url": "https://github.com/EchterAlsFake/PySide6-to-iOS/releases/download/6.12.0-ios15-cp315/qt-sdk-6.12.0-ios15-ios_x86_64_simulator.tar.zst"
+    }
+  ]
+}

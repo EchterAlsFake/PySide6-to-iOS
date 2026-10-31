@@ -70,6 +70,7 @@ empty = staging / "empty.entitlements.plist"
 empty.write_bytes(plistlib.dumps({}))
 frameworks = sorted((app / "Frameworks").glob("*.framework"))
 normalized_frameworks = []
+thinned_frameworks = []
 for framework in frameworks:
     metadata_path = framework / "Info.plist"
     metadata = plistlib.loads(metadata_path.read_bytes())
@@ -77,6 +78,17 @@ for framework in frameworks:
         metadata["CFBundlePackageType"] = "FMWK"
         normalized_frameworks.append(framework.name)
     metadata_path.write_bytes(plistlib.dumps(metadata))
+    executable = framework / metadata["CFBundleExecutable"]
+    with executable.open("rb") as stream:
+        magic = stream.read(4)
+    if magic in {b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca", b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"}:
+        # BeeWare may wrap even a single device architecture in a fat Mach-O.
+        # Normalize the staging copy before re-signing and auditing its code.
+        temporary = executable.with_name(executable.name + ".arm64-thin")
+        subprocess.run(["/usr/bin/xcrun", "lipo", str(executable), "-thin", "arm64", "-output", str(temporary)], check=True)
+        temporary.chmod(executable.stat().st_mode & 0o777)
+        temporary.replace(executable)
+        thinned_frameworks.append(framework.name)
 signatures = []
 for target in [*frameworks, app]:
     subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none",
@@ -145,6 +157,7 @@ report = {"ipa": str(output), "bytes": output.stat().st_size, "sha256": sha256,
           "nested_signature_verification_passed": True, "zip_crc_verification_passed": True,
           "native_extension_framework_markers_valid": True,
           "framework_bundle_types_normalized": normalized_frameworks,
+          "framework_archives_thinned_to_arm64": thinned_frameworks,
           "stock_device_runtime_tested": False, "source_app_unchanged": True,
           "removed_build_only_entries": removed}
 output.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n")

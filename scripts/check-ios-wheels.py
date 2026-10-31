@@ -14,16 +14,17 @@ audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)
 
 
-def check(directory, target, maximum):
+def check(directory, target, maximum, python_version="3.15"):
+    python_tag = "cp" + python_version.replace(".", "")
     output = []
     for package in ["pyside6", "shiboken6"]:
         matches = [p for p in directory.glob("*.whl") if p.name.lower().startswith(package + "-")
-                   and p.name.endswith("-" + target + ".whl")]
+                   and p.name.endswith(f"-{python_tag}-{python_tag}-{target}.whl")]
         if len(matches) != 1:
-            raise ValueError(f"Expected one {package} wheel for {target}, found {matches}")
+            raise ValueError(f"Expected one {package} wheel for CPython {python_version} / {target}, found {matches}")
         path = matches[0]
-        if not re.search(r"-6\.12\.0-.*-cp315-cp315-", path.name, re.I):
-            raise ValueError(f"Expected Qt/PySide 6.12.0 / CPython 3.15: {path.name}")
+        if not re.search(r"-6\.12\.0-.*-" + python_tag + "-" + python_tag + "-", path.name, re.I):
+            raise ValueError(f"Expected Qt/PySide 6.12.0 / CPython {python_version}: {path.name}")
         count = 0
         minimums = Counter()
         with zipfile.ZipFile(path) as archive:
@@ -32,7 +33,7 @@ def check(directory, target, maximum):
                 raise ValueError(f"ZIP CRC error: {bad}")
             metadata_name = next(n for n in archive.namelist() if n.endswith(".dist-info/WHEEL"))
             metadata = archive.read(metadata_name).decode()
-            if f"Tag: cp315-cp315-{target}" not in metadata:
+            if f"Tag: {python_tag}-{python_tag}-{target}" not in metadata:
                 raise ValueError("Internal WHEEL tag does not match filename")
             for name in archive.namelist():
                 if name.endswith("/"):
@@ -81,6 +82,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
     parser.add_argument("--target", choices=audit.TARGETS, required=True)
+    parser.add_argument("--python-version", choices=["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"], default="3.15")
     parser.add_argument("--max-ios", help="Reject native deployment targets newer than this version")
     args = parser.parse_args()
     maximum = None
@@ -88,4 +90,4 @@ if __name__ == "__main__":
         parts = [int(x) for x in args.max_ios.split(".")]
         parts += [0] * (3 - len(parts))
         maximum = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-    print(json.dumps(check(args.directory, args.target, maximum), indent=2))
+    print(json.dumps(check(args.directory, args.target, maximum, args.python_version), indent=2))

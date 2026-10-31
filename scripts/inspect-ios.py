@@ -5,6 +5,7 @@ from collections import Counter
 import json
 from pathlib import Path
 import plistlib
+import re
 import struct
 
 TARGETS = {"ios_arm64": (0x0100000C, 2), "ios_arm64_simulator": (0x0100000C, 7),
@@ -97,10 +98,14 @@ def runtime(path, target, maximum=None):
     framework = path / entry["LibraryIdentifier"] / entry["LibraryPath"]
     if not (framework / "Headers/Python.h").is_file():
         raise ValueError("Runtime Python.h missing")
-    if not (path / "lib/python3.15/encodings/__init__.py").is_file():
-        raise ValueError("Common Python 3.15 standard library missing")
+    header = (framework / "Headers/patchlevel.h").read_text()
+    major = re.search(r"#define\s+PY_MAJOR_VERSION\s+(\d+)", header).group(1)
+    minor = re.search(r"#define\s+PY_MINOR_VERSION\s+(\d+)", header).group(1)
+    python_version = f"{major}.{minor}"
+    if not (path / f"lib/python{python_version}/encodings/__init__.py").is_file():
+        raise ValueError(f"Common Python {python_version} standard library missing")
     records = validate(list(native_records((framework / "Python").read_bytes(), "Python.framework/Python")), target, maximum)
-    extensions = path / entry["LibraryIdentifier"] / f"lib-{arch}/python3.15/lib-dynload"
+    extensions = path / entry["LibraryIdentifier"] / f"lib-{arch}/python{python_version}/lib-dynload"
     extension_files = sorted(extensions.glob("*.so"))
     if not extension_files:
         raise ValueError(f"Pinned runtime native extensions missing: {extensions}")
@@ -108,7 +113,7 @@ def runtime(path, target, maximum=None):
     for extension in extension_files:
         selected = validate(list(native_records(extension.read_bytes(), extension.name)), target, maximum)
         extension_minimums.update(version(r["minimum"]) for r in selected)
-    return {"runtime": str(path), "target": target, "slice": entry["LibraryIdentifier"],
+    return {"runtime": str(path), "target": target, "python_version": python_version, "slice": entry["LibraryIdentifier"],
             "minimum_ios": [version(r["minimum"]) for r in records], "audit_passed": True,
             "native_extension_count": len(extension_files), "native_extension_minimums": dict(extension_minimums),
             "runtime_execution_tested_by_this_audit": False}
