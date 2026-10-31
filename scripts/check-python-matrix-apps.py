@@ -112,6 +112,17 @@ def main():
                 app = products / (name + ".app")
                 if not simulator:
                     ipa = root / "ipas" / ("PySideMatrix-Python" + minor.replace(".", "") + "-ios15.ipa")
+                    # Recover a staging copy left by an interrupted or superseded
+                    # attempt; the original built .app is kept outside this path.
+                    staging = ipa.parent / (ipa.stem + "-staging")
+                    if staging.exists():
+                        shutil.rmtree(staging)
+                    if ipa.exists():
+                        saved = root / "ipas/superseded" / str(time.time_ns())
+                        saved.mkdir(parents=True)
+                        for old in [ipa, ipa.with_suffix(".json"), ipa.with_suffix(".ipa.sha256")]:
+                            if old.exists():
+                                shutil.move(str(old), str(saved / old.name))
                     command(label + "-app-ipa", ["/usr/local/bin/python3", guide / "scripts/package-ipa.py", "--app", app,
                         "--output", ipa, "--bundle-id", "org.echteralsfake.PySideMatrixSmoke.Sideload",
                         "--display-name", "PySide Python " + minor, "--share-documents"])
