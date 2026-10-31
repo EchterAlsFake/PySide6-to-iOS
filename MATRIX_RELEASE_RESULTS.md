@@ -9,13 +9,17 @@ pinned upstream binaries. The host Qt kit is Intel x86_64 / macOS 15+.
 | --- | --- | --- | --- | --- |
 | `ios_arm64` | 52 | 105 | 314 | Stock iPhone 7 / iOS 15.8.8, imports + touch (user confirmed) |
 | `ios_arm64_simulator` | 52 | 105 | 314 | Cross-linked; execution not tested on this Intel host |
-| `ios_x86_64_simulator` | 52 | 105 | 314 | Intel simulator / iOS 26.3.1, imports + visible window |
+| `ios_x86_64_simulator` | 52 | 105 | 314 | Intel simulator / iOS 26.3.1, imports + Qt-reported window visibility; rendering unverified |
 
 Every target passed wheel CRC, architecture, Mach-O platform and native
 deployment-minimum audits and a full-module application link. QtQmlFeatures
 and QtAsyncio are supplied in addition to the 52 bindings. Required UiTools
 and Remote Objects support archives are included; apply the host deployment
 patch before generating applications that use them.
+
+The Intel simulator imports all modules and Qt reports a visible window, but
+its captured screen is black in this GPU-less VM. Actual simulator rendering
+is not established by that programmatic visibility flag.
 
 The stock-device result applies to the generic matrix test app, not the
 separate PornFetch IPA. Imports and a working UI do not exercise every module

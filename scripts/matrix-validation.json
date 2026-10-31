@@ -1861,12 +1861,15 @@
       "runtime_os": "26.3.1",
       "runtime_binding_count": 52,
       "module_features_exercised": false,
-      "physical_ios15_tested": false
+      "physical_ios15_tested": false,
+      "visual_rendering_verified": false,
+      "rendering_note": "All imports succeeded and Qt reports a visible window. Simulator screenshot is black in this GPU-less VM; actual simulator rendering is not established."
     }
   },
   "not_tested": [
     "ARM64 simulator execution on Apple Silicon",
     "Every module hardware/media/networking feature",
-    "Stock-device PornFetch application workflow"
+    "Stock-device PornFetch application workflow",
+    "Visual rendering of the fresh Intel simulator app in this GPU-less VM"
   ]
 }
