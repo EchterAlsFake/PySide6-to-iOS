@@ -56,7 +56,8 @@ def main():
         assert time.monotonic() < deadline, "Timed out waiting for matrix app checks"
         state = json.loads((root / "python-matrix-state.json").read_text())
         progress = False
-        for minor, target in sorted(pending):
+        for minor, target in sorted(pending, key=lambda pair: (pair[0],
+                0 if targets[pair[1]][1] and targets[pair[1]][0] == platform.machine() else 1, pair[1])):
             label = "cp" + minor.replace(".", "") + "-" + target
             built = state["stages"].get(label, {})
             if built.get("status") != "passed":

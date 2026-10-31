@@ -52,10 +52,21 @@
       "file": "pyside6-6.12-ios-static-support.patch",
       "sha256": "1022459c702fa9ba589e08932c06c59220a4879f313840c1270daa62b755ed21",
       "source_revision": "f50facb83fc3dc5f3240c854668c7a6dd93871b2"
+    },
+    {
+      "file": "pyside6-6.12-ios-py310-imports.patch",
+      "sha256": "afeef10a524c90e27ecc81b8e837c93348ba182a2a5d8b34d6b00b06b7b8d994",
+      "source_revision": "f50facb83fc3dc5f3240c854668c7a6dd93871b2"
     }
   ],
   "ios_deploy_patch": {
     "file": "pyside6-6.12-ios-deploy-support.patch",
     "sha256": "5c861b5b5f03070f71f5eb9a08f20e82b4d052ddf09414d298a28c7e78a39733"
-  }
+  },
+  "ios_deploy_additional_patches": [
+    {
+      "file": "pyside6-6.12-ios-deploy-py310-imports.patch",
+      "sha256": "d25e04eac415e05467e586ad006a30d74c764bd078cd51a823a0bdbf1a1963cb"
+    }
+  ]
 }

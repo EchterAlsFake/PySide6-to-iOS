@@ -68,3 +68,11 @@ project with `pyside6-ios-deploy`. Application linking and interpreter import
 tests are separate from the build/audit stage. Apple Silicon simulator
 execution cannot be tested on an Intel host; simulator screen capture in a
 GPU-less VM does not establish actual rendering.
+
+Python 3.10 also needs the deployment bootstrap fix supplied by
+`scripts/patch-ios-deploy.py`. Its built-in importer normally refuses package
+submodules; iOS statically registers names such as `shiboken6.Shiboken` and
+`PySide6.QtCore`. The patched launcher adds a finder for registered built-ins
+on Python 3.10 only. Regenerate existing projects after patching the host
+deployment environment. The corrected launcher passed all 52 module imports
+on the Intel simulator; this does not yet establish a physical Python 3.10 test.

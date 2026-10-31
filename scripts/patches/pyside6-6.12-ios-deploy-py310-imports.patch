@@ -1,0 +1,24 @@
+--- a/deploy_lib/ios/main_mm.py
++++ b/deploy_lib/ios/main_mm.py
+@@ -90,6 +90,21 @@
+         NSLog(@"Python init failed: %s", status.err_msg);
+         Py_ExitStatusException(status);
+     }}
++#if PY_VERSION_HEX < 0x030B0000
++    // Python 3.10's BuiltinImporter rejects submodules when a package path is
++    // supplied. iOS statically registers dotted PySide/Shiboken module names.
++    if (PyRun_SimpleString(
++        "import _imp, importlib.machinery, sys\\n"
++        "class _IOSStaticBuiltinFinder:\\n"
++        "    def find_spec(self, fullname, path=None, target=None):\\n"
++        "        if _imp.is_builtin(fullname):\\n"
++        "            return importlib.machinery.BuiltinImporter.find_spec(fullname)\\n"
++        "sys.meta_path.insert(0, _IOSStaticBuiltinFinder())\\n"
++    ) < 0) {{
++        PyErr_Print();
++        Py_Exit(1);
++    }}
++#endif
+     NSLog(@"Python %s initialized", Py_GetVersion());
+ }}
+ 
